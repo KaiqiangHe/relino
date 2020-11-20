@@ -72,4 +72,65 @@ public class Job {
         this.commonAttr = commonAttr;
         this.mOper = mOper;
     }
+
+    public Job(JobBuilder builder) {
+        this.id = null;
+        this.jobId = builder.getJobId();
+        this.idempotentId = builder.getIdempotentId();
+        this.jobCode = builder.getJobCode();;
+        this.delayJob = builder.isDelayJob();
+        this.beginTime = builder.getBeginTime();
+        this.willExecuteTime = this.beginTime;
+        this.commonAttr = builder.getCommonAttr();
+        this.mOper = builder.getMOper();
+        this.jobStatus = JobStatus.DELAY;
+        this.executeOrder = -1; // TODO: 2020/11/20
+        this.mOper.setOperStatus(OperStatus.RUNNABLE);
+    }
+
+    // ------------------------------------------------------
+
+    public Long getId() {
+        return id;
+    }
+
+    public String getJobId() {
+        return jobId;
+    }
+
+    public String getIdempotentId() {
+        return idempotentId;
+    }
+
+    public String getJobCode() {
+        return jobCode;
+    }
+
+    public JobStatus getJobStatus() {
+        return jobStatus;
+    }
+
+    public long getExecuteOrder() {
+        return executeOrder;
+    }
+
+    public LocalDateTime getWillExecuteTime() {
+        return willExecuteTime;
+    }
+
+    public boolean isDelayJob() {
+        return delayJob;
+    }
+
+    public LocalDateTime getBeginTime() {
+        return beginTime;
+    }
+
+    public JobAttr getCommonAttr() {
+        return commonAttr;
+    }
+
+    public Oper getmOper() {
+        return mOper;
+    }
 }

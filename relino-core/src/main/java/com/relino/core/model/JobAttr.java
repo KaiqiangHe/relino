@@ -22,6 +22,15 @@ public class JobAttr {
     public JobAttr() {
     }
 
+    public String asString() {
+        // TODO: 2020/11/20
+        return "";
+    }
+    public static JobAttr asObj(String data) {
+        return new JobAttr();
+        // TODO: 2020/11/20
+    }
+
     public void addAll(JobAttr newAttr) {
         this.attr.putAll(newAttr.attr);
     }
