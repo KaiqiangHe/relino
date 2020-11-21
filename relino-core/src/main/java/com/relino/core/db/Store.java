@@ -3,6 +3,7 @@ package com.relino.core.db;
 import com.relino.core.model.Job;
 import com.relino.core.model.JobStatus;
 
+import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -12,14 +13,16 @@ import java.util.List;
 public interface Store {
 
     /**
-     * 插入一条新job
+     * 插入一条新job，返回受影响的行数
      */
-    void insertJob(Job job);
+    int insertJob(Job job) throws SQLException;
 
     /**
+     * 更新job, 返回受影响的行数
+     *
      * @param updateCommonAttr 是否更新commonAttr
      */
-    void updateJob(Job job, boolean updateCommonAttr);
+    int updateJob(Job job, boolean updateCommonAttr) throws SQLException;
 
     /**
      * 返回willExecuteTime在[start, end] 且 jobStatus为{@link JobStatus#DELAY} 的limit个job

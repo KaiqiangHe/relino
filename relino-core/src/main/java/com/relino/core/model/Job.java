@@ -130,7 +130,19 @@ public class Job {
         return commonAttr;
     }
 
-    public Oper getmOper() {
+    public Oper getMOper() {
         return mOper;
+    }
+
+    public void setJobStatus(JobStatus jobStatus) {
+        this.jobStatus = jobStatus;
+    }
+
+    public void setExecuteOrder(long executeOrder) {
+        this.executeOrder = executeOrder;
+    }
+
+    public void setWillExecuteTime(LocalDateTime willExecuteTime) {
+        this.willExecuteTime = willExecuteTime;
     }
 }

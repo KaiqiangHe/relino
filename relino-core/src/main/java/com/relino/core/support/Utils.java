@@ -20,6 +20,10 @@ public class Utils {
         MAX_DATE_TIME = LocalDateTime.of(2500, 1, 1, 0, 0,1);
     }
 
+    public static boolean isEmpty(String str) {
+        return str == null || str.isEmpty();
+    }
+
 
     // ------------------------------------------------------------------------------
     // 参数校验
@@ -34,7 +38,7 @@ public class Utils {
         }
     }
     public static void checkNonEmpty(String str) {
-        if (str == null)
+        if (isEmpty(str))
             throw new NullPointerException();
     }
 }

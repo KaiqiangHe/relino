@@ -1,5 +1,6 @@
 package com.relino.core.model;
 
+import com.relino.core.support.JacksonJobAttrSerializer;
 import com.relino.core.support.Utils;
 
 import java.time.LocalDateTime;
@@ -17,18 +18,25 @@ import java.util.function.Function;
  */
 public class JobAttr {
 
+    private static JobAttrSerializer serializer;
+
+    static {
+        serializer = new JacksonJobAttrSerializer();
+    }
+
     private Map<String, String> attr = new HashMap<>();
 
     public JobAttr() {
     }
 
     public String asString() {
-        // TODO: 2020/11/20
-        return "";
+        return serializer.asString(attr);
     }
-    public static JobAttr asObj(String data) {
-        return new JobAttr();
-        // TODO: 2020/11/20
+    public static JobAttr asObj(String str) {
+        Utils.checkNonEmpty(str);
+        JobAttr ret = new JobAttr();
+        ret.attr = serializer.asAttr(str);
+        return ret;
     }
 
     public void addAll(JobAttr newAttr) {
