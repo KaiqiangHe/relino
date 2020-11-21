@@ -1,5 +1,6 @@
 package com.relino.core.db;
 
+import com.relino.core.TestHelper;
 import com.relino.core.model.*;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -15,17 +16,7 @@ public class DBBasedStoreTest {
 
     @Before
     public void init() {
-        HikariConfig config = new HikariConfig();
-        config.setJdbcUrl("jdbc:mysql://localhost:3306/relino");
-        config.setUsername("root");
-        config.setPassword("DQ971208");
-        config.setAutoCommit(true);
-        config.setConnectionTimeout(5 * 1000);  // 5s
-        config.setMinimumIdle(5);
-        config.setMinimumIdle(10);
-
-        HikariDataSource ds = new HikariDataSource(config);
-        store = new DBBasedStore(ds);
+        store = new DBBasedStore(TestHelper.getDataSource());
     }
 
     @Test

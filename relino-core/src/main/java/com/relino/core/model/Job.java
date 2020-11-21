@@ -1,5 +1,7 @@
 package com.relino.core.model;
 
+import com.relino.core.JobProducer;
+import com.relino.core.JobProducer.JobBuilder;
 import com.relino.core.support.Utils;
 
 import java.time.LocalDateTime;

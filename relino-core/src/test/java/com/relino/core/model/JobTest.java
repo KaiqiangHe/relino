@@ -1,5 +1,6 @@
 package com.relino.core.model;
 
+import com.relino.core.JobProducer.JobBuilder;
 import com.relino.core.action.LogAction;
 import com.relino.core.model.retry.IRetryPolicyManager;
 import com.relino.core.support.id.IdGenerator;
