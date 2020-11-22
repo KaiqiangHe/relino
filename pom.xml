@@ -26,6 +26,7 @@
         <logback.version>1.2.3</logback.version>
 
         <jackson.version>2.10.5</jackson.version>
+        <curator.version>4.0.0</curator.version>
 
         <junit.version>4.12</junit.version>
     </properties>
@@ -66,6 +67,18 @@
                 <groupId>ch.qos.logback</groupId>
                 <artifactId>logback-core</artifactId>
                 <version>${logback.version}</version>
+            </dependency>
+
+            <!-- zk -->
+            <dependency>
+                <groupId>org.apache.curator</groupId>
+                <artifactId>curator-framework</artifactId>
+                <version>${curator.version}</version>
+            </dependency>
+            <dependency>
+                <groupId>org.apache.curator</groupId>
+                <artifactId>curator-recipes</artifactId>
+                <version>${curator.version}</version>
             </dependency>
 
             <!-- jackson -->
