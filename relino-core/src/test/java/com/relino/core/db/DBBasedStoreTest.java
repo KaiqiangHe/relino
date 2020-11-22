@@ -1,9 +1,7 @@
 package com.relino.core.db;
 
-import com.relino.core.TestHelper;
+import com.relino.core.helper.TestHelper;
 import com.relino.core.model.*;
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 import org.junit.Before;
 import org.junit.Test;
 

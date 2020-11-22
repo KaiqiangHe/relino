@@ -1,14 +1,23 @@
 package com.relino.core.db;
 
 import com.relino.core.model.Job;
+import com.relino.core.model.JobEntity;
 import com.relino.core.model.Oper;
+import com.relino.core.support.Utils;
 import org.apache.commons.dbutils.QueryRunner;
+import org.apache.commons.dbutils.handlers.MapHandler;
+import org.apache.commons.dbutils.handlers.MapListHandler;
 
 import javax.sql.DataSource;
+import java.math.BigInteger;
+import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author kaiqiang.he
@@ -22,6 +31,11 @@ public class DBBasedStore implements Store {
     public DBBasedStore(DataSource dataSource) {
         this.dataSource = dataSource;
         runner = new QueryRunner(dataSource);
+    }
+
+    @Override
+    public DataSource getDataSource() {
+        return dataSource;
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -76,6 +90,47 @@ public class DBBasedStore implements Store {
 
         return runner.execute(sql, param.toArray());
     }
+
+    // -----------------------------------------------------------------------------------------------------------------
+    @Override
+    public String kvSelectForUpdate(Connection conn, String key) throws SQLException {
+        Map<String, Object> row = runner.query(conn, "select v from kv where k = ? for update", new MapHandler(), key);
+        if(Utils.isEmpty(row)) {
+            return null;
+        }
+        Object v = row.get("v");
+        return v == null ? null : (String) v;
+    }
+
+    @Override
+    public int kvUpdateValue(Connection conn, String key, String newValue) throws SQLException {
+        return runner.execute(conn, "update kv set v = ? where k = ?", newValue, key);
+    }
+
+    @Override
+    public List<JobEntity> selectJobEntity(long lastExecuteJobId, int limit) throws SQLException {
+        List<Map<String, Object>> rows = runner.query(
+                "select * from job where job_status = 2 and execute_order > ? order by execute_order limit ?",
+                new MapListHandler(), lastExecuteJobId, limit);
+
+        if(Utils.isEmpty(rows)) {
+            return Collections.emptyList();
+        }
+
+        return rows.stream().map(r -> {
+            // TODO: 2020/11/22
+            JobEntity entity = new JobEntity();
+            entity.setId(((BigInteger) r.get("id")).longValue());
+            entity.setJobId((String) r.get("job_id"));
+            entity.setExecuteOrder(((long) r.get("execute_order")));
+            return entity;
+        }).collect(Collectors.toList());
+    }
+    // -----------------------------------------------------------------------------------------------------------------
+
+
+
+    // -----------------------------------------------------------------------------------------------------------------
 
     @Override
     public List<Long> getRunnableDelayJobId(LocalDateTime start, LocalDateTime end, int limit) {

@@ -2,6 +2,7 @@ package com.relino.core;
 
 import com.relino.core.db.DBBasedStore;
 import com.relino.core.db.Store;
+import com.relino.core.helper.TestHelper;
 import com.relino.core.model.Job;
 import com.relino.core.model.JobAttr;
 import com.relino.core.model.Oper;

@@ -1,4 +1,4 @@
-package com.relino.core.action;
+package com.relino.core.helper;
 
 import com.relino.core.model.Action;
 import com.relino.core.model.ActionResult;

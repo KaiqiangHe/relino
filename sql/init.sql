@@ -40,3 +40,14 @@ CREATE TABLE job
     index  idx_will_execute_time_job_status(will_execute_time, job_status)
 ) ENGINE = INNODB
   DEFAULT CHARSET = utf8mb4;
+
+drop table if exists kv;
+CREATE TABLE kv
+(
+    k varchar(128) NOT NULL COMMENT 'id',
+    v varchar(128)  not null comment 'value',
+
+    primary key (k)
+) ENGINE = INNODB
+  DEFAULT CHARSET = utf8mb4;
+insert into kv(k, v) value ('execute_queue_cursor', '-1');

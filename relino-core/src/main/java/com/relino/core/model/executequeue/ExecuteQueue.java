@@ -1,4 +1,6 @@
-package com.relino.core.model;
+package com.relino.core.model.executequeue;
+
+import com.relino.core.model.Job;
 
 import java.util.List;
 
@@ -9,7 +11,7 @@ import java.util.List;
  */
 public interface ExecuteQueue {
 
-    /**
+    /**ExecuteQueue
      * 获取下一批可执行的Job
      *
      * @param batchSize > 0

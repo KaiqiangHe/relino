@@ -1,15 +1,19 @@
 package com.relino.core.model;
 
-import com.relino.core.JobProducer;
 import com.relino.core.JobProducer.JobBuilder;
 import com.relino.core.support.Utils;
+import com.relino.core.support.thread.Processor;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 
 /**
  * @author kaiqiang.he
  */
-public class Job {
+public class Job implements Processor {
+
+    private static final Logger log = LoggerFactory.getLogger(Job.class);
 
     public static final String DEFAULT_JOB_CODE = Utils.EMPTY_STRING;
 
@@ -90,6 +94,17 @@ public class Job {
         this.mOper.setOperStatus(OperStatus.RUNNABLE);
     }
 
+    @Override
+    public void process() {
+        // TODO: 2020/11/22
+        try {
+            Thread.sleep(10);
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        log.info("待实现... ");
+    }
+
     // ------------------------------------------------------
 
     public Long getId() {
@@ -146,5 +161,18 @@ public class Job {
 
     public void setWillExecuteTime(LocalDateTime willExecuteTime) {
         this.willExecuteTime = willExecuteTime;
+    }
+
+    // TODO: 2020/11/22
+    @Override
+    public String toString() {
+        return "Job{" +
+                "id=" + id +
+                ", jobId='" + jobId + '\'' +
+                ", idempotentId='" + idempotentId + '\'' +
+                ", jobCode='" + jobCode + '\'' +
+                ", jobStatus=" + jobStatus +
+                ", executeOrder=" + executeOrder +
+                '}';
     }
 }

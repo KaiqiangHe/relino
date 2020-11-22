@@ -1,6 +1,9 @@
 package com.relino.core.support;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.Map;
 import java.util.function.Predicate;
 
 /**
@@ -24,6 +27,13 @@ public class Utils {
         return str == null || str.isEmpty();
     }
 
+    public static <E> boolean isEmpty(Collection<E> coll) {
+        return coll == null || coll.isEmpty();
+    }
+
+    public static <K, V> boolean isEmpty(Map<K, V> map) {
+        return map == null || map.isEmpty();
+    }
 
     // ------------------------------------------------------------------------------
     // 参数校验
