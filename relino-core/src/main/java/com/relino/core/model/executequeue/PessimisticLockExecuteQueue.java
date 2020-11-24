@@ -8,8 +8,6 @@ import com.relino.core.support.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
-import javax.sql.DataSource;
-import java.sql.Connection;
 import java.time.LocalDateTime;
 import java.util.Collections;
 import java.util.List;
@@ -23,8 +21,6 @@ import java.util.stream.Collectors;
 public class PessimisticLockExecuteQueue implements ExecuteQueue {
 
     private static final String EXECUTE_QUEUE_CURSOR = "execute_queue_cursor";
-
-    private static final Logger log = LoggerFactory.getLogger(PessimisticLockExecuteQueue.class);
 
     private Store store;
 
@@ -43,43 +39,27 @@ public class PessimisticLockExecuteQueue implements ExecuteQueue {
             throw new IllegalArgumentException("参数batchSize比速大于0, 当前值为" + batchSize);
         }
 
-        DataSource ds = store.getDataSource();
-        Connection conn = ds.getConnection();
+        return store.executeWithTx(
+                t -> {
+                    String lastExecuteJobIdStr = store.kvSelectForUpdate(EXECUTE_QUEUE_CURSOR);
+                    long lastExecuteJobId = Long.parseLong(lastExecuteJobIdStr);
 
-        try {
-            conn.setAutoCommit(false);
+                    List<JobEntity> rows = store.selectJobEntity(lastExecuteJobId, batchSize);
 
-            // acquire pessimistic lock
-            // lock 直到事务提交
-            String lastExecuteJobIdStr = store.kvSelectForUpdate(conn, EXECUTE_QUEUE_CURSOR);
-            long lastExecuteJobId = Long.parseLong(lastExecuteJobIdStr);
+                    if(!Utils.isEmpty(rows)) {
+                        long lastExecuteOrder = rows.get(rows.size() - 1).getExecuteOrder();
+                        store.kvUpdateValue(EXECUTE_QUEUE_CURSOR, Long.toString(lastExecuteOrder));
+                    }
 
-            List<JobEntity> rows = store.selectJobEntity(lastExecuteJobId, batchSize);
-
-            if(!Utils.isEmpty(rows)) {
-                long lastExecuteOrder = rows.get(rows.size() - 1).getExecuteOrder();
-                store.kvUpdateValue(conn, EXECUTE_QUEUE_CURSOR, Long.toString(lastExecuteOrder));
-            }
-
-            // release lock
-            conn.commit();
-
-            if(Utils.isEmpty(rows)) {
-                return Collections.emptyList();
-            } else {
-                // TODO: 2020/11/22
-                return rows.stream().map(e -> {
-                    return new Job(e.getId(), e.getJobId(), e.getJobId(), "", false, LocalDateTime.now(), new JobAttr(), null);
-                }).collect(Collectors.toList());
-            }
-        } catch (Exception e) {
-            log.error("getExecutableJobId error ", e);
-            conn.rollback(); // release lock
-            throw e;
-        } finally {
-            if(conn != null) {
-                conn.close();
-            }
-        }
+                    if(Utils.isEmpty(rows)) {
+                        return Collections.emptyList();
+                    } else {
+                        return rows.stream().map(e -> {
+                            // TODO: 2020/11/24
+                            return new Job(e.getId(), e.getJobId(), e.getJobId(), "", false, LocalDateTime.now(), new JobAttr(), null);
+                        }).collect(Collectors.toList());
+                    }
+                }, null
+        );
     }
 }

@@ -5,56 +5,85 @@ import com.relino.core.model.JobEntity;
 import com.relino.core.model.JobStatus;
 
 import javax.sql.DataSource;
-import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.List;
 
 /**
+ *
  * @author kaiqiang.he
  */
-public interface Store {
+public abstract class Store {
 
-    DataSource getDataSource();
+    protected DataSource dataSource;
 
+    public Store(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+
+    // -----------------------------------------------------------
+    // tx
+    abstract public void beginTx() throws SQLException;
+
+    abstract public void commitTx() throws SQLException;
+
+    abstract public void rollbackTx() throws SQLException;
+
+    public <T, R> R executeWithTx(TxFunction<T, R> func, T t) throws Exception {
+        beginTx();
+        try {
+            R ret = func.execute(t);
+            commitTx();
+            return ret;
+        } catch (Exception e) {
+            rollbackTx();
+            throw e;
+        }
+    }
+
+    // -----------------------------------------------------------
     /**
      * 插入一条新job，返回受影响的行数
      */
-    int insertJob(Job job) throws SQLException;
+    abstract public int insertJob(Job job) throws SQLException;
+
+    /**
+     * 根据jobId查询
+     *
+     * @return nullable
+     */
+    abstract public JobEntity queryByJobId(String jobId) throws SQLException;
 
     /**
      * 更新job, 返回受影响的行数
      *
      * @param updateCommonAttr 是否更新commonAttr
      */
-    int updateJob(Job job, boolean updateCommonAttr) throws SQLException;
+    abstract public int updateJob(Job job, boolean updateCommonAttr) throws SQLException;
 
     /**
      * select for update
      */
-    String kvSelectForUpdate(Connection conn, String key) throws SQLException;
+    abstract public String kvSelectForUpdate(String key) throws SQLException;
 
-    int kvUpdateValue(Connection conn, String key, String newValue) throws SQLException;
+    abstract public int kvUpdateValue(String key, String newValue) throws SQLException;
 
     /**
      * @return not null
      */
-    List<JobEntity> selectJobEntity(long lastExecuteJobId, int limit) throws SQLException;
+    abstract public List<JobEntity> selectJobEntity(long lastExecuteJobId, int limit) throws SQLException;
 
     /**
      * 返回willExecuteTime在[start, end] 且 jobStatus为{@link JobStatus#DELAY} 的limit个job
      *
      * @return not null, 如果无数据返回空list
      */
-    List<Long> getRunnableDelayJobId(LocalDateTime start, LocalDateTime end, int limit);
+    abstract public List<Long> getRunnableDelayJobId(LocalDateTime start, LocalDateTime end, int limit);
 
     /**
      * 设置delay job 的executeOrder, 和状态为{@link JobStatus#RUNNABLE}
      *
      * @param updateData executeOrder
      */
-    void setDelayJobRunnable(List<IdAndExecuteOrder> updateData);
-
-
-
+    abstract public void setDelayJobRunnable(List<IdAndExecuteOrder> updateData);
 }

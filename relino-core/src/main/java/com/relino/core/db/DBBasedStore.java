@@ -1,10 +1,12 @@
 package com.relino.core.db;
 
+import com.relino.core.exception.RelinoException;
 import com.relino.core.model.Job;
 import com.relino.core.model.JobEntity;
 import com.relino.core.model.Oper;
 import com.relino.core.support.Utils;
 import org.apache.commons.dbutils.QueryRunner;
+import org.apache.commons.dbutils.ResultSetHandler;
 import org.apache.commons.dbutils.handlers.MapHandler;
 import org.apache.commons.dbutils.handlers.MapListHandler;
 
@@ -22,20 +24,71 @@ import java.util.stream.Collectors;
 /**
  * @author kaiqiang.he
  */
-public class DBBasedStore implements Store {
+public class DBBasedStore extends Store {
 
-    private DataSource dataSource;
+    private ThreadLocal<Connection> connThreadLocal = new ThreadLocal<>();
 
     private QueryRunner runner;
 
     public DBBasedStore(DataSource dataSource) {
-        this.dataSource = dataSource;
+        super(dataSource);
         runner = new QueryRunner(dataSource);
     }
 
     @Override
-    public DataSource getDataSource() {
-        return dataSource;
+    public void beginTx() throws SQLException {
+        Connection conn = connThreadLocal.get();
+        if(conn != null) {
+            throw new RelinoException("不能重复调用beginTx(), 应先调用commitTx()或rollbackTx()关闭当前Connection");
+        }
+
+        try {
+            conn = dataSource.getConnection();
+            conn.setAutoCommit(false);
+            connThreadLocal.set(conn);
+        } catch (Exception e) {
+            closeAndRemoveConnection();
+            throw e;
+        }
+    }
+
+    @Override
+    public void commitTx() throws SQLException {
+        Connection conn = connThreadLocal.get();
+        if(conn == null) {
+            throw new RelinoException("当前线程无Connection对象, 应先调用beginTx()开启事务");
+        }
+        try {
+            conn.commit();
+        } finally {
+            closeAndRemoveConnection();
+        }
+    }
+
+    @Override
+    public void rollbackTx() throws SQLException {
+        Connection conn = connThreadLocal.get();
+        if(conn == null) {
+            throw new RelinoException("当前线程无Connection对象, 应先调用beginTx()开启事务");
+        }
+        try {
+            conn.rollback();
+        } finally {
+            closeAndRemoveConnection();
+        }
+    }
+
+    /**
+     * 关闭并移除Connection对象
+     */
+    private void closeAndRemoveConnection() throws SQLException {
+        Connection conn = connThreadLocal.get();
+        if(conn != null) {
+            connThreadLocal.remove();
+            if(!conn.isClosed()) {
+                conn.close();
+            }
+        }
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -48,13 +101,24 @@ public class DBBasedStore implements Store {
     @Override
     public int insertJob(Job job) throws SQLException {
         Oper mOper = job.getMOper();
-
-        return runner.execute(
-                INSERT_JOB_SQL,
+        Object[] params = new Object[] {
                 job.getJobId(), job.getIdempotentId(), job.getJobCode(), job.getJobStatus().getCode(), job.isDelayJob(), job.getBeginTime(),
                 job.getCommonAttr().asString(), job.getWillExecuteTime(), job.getExecuteOrder(),
                 mOper.getActionId(), mOper.getOperStatus().getCode(), mOper.getExecuteCount(), mOper.getRetryPolicyId(), mOper.getMaxExecuteCount()
-                );
+        };
+
+        return execute(INSERT_JOB_SQL, params);
+    }
+
+    @Override
+    public JobEntity queryByJobId(String jobId) throws SQLException {
+        String sql = "select * from job where job_id = ?";
+        Map<String, Object> row = query(sql, new MapHandler(), new Object[]{jobId});
+        if(row == null) {
+            return null;
+        }
+
+        return toJobEntity(row);
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -88,13 +152,15 @@ public class DBBasedStore implements Store {
         param.add(oper.getExecuteCount());
         param.add(job.getJobId());
 
-        return runner.execute(sql, param.toArray());
+        return execute(sql, param.toArray());
     }
 
     // -----------------------------------------------------------------------------------------------------------------
     @Override
-    public String kvSelectForUpdate(Connection conn, String key) throws SQLException {
-        Map<String, Object> row = runner.query(conn, "select v from kv where k = ? for update", new MapHandler(), key);
+    public String kvSelectForUpdate(String key) throws SQLException {
+        String sql = "select v from kv where k = ? for update";
+        Map<String, Object> row = query(sql, new MapHandler(), new Object[]{key});
+
         if(Utils.isEmpty(row)) {
             return null;
         }
@@ -103,33 +169,34 @@ public class DBBasedStore implements Store {
     }
 
     @Override
-    public int kvUpdateValue(Connection conn, String key, String newValue) throws SQLException {
-        return runner.execute(conn, "update kv set v = ? where k = ?", newValue, key);
+    public int kvUpdateValue(String key, String newValue) throws SQLException {
+        return execute("update kv set v = ? where k = ?", new Object[] {newValue, key});
     }
 
     @Override
     public List<JobEntity> selectJobEntity(long lastExecuteJobId, int limit) throws SQLException {
-        List<Map<String, Object>> rows = runner.query(
-                "select * from job where job_status = 2 and execute_order > ? order by execute_order limit ?",
-                new MapListHandler(), lastExecuteJobId, limit);
 
+        String sql = "select * from job where job_status = 2 and execute_order > ? order by execute_order limit ?";
+        List<Map<String, Object>> rows = query(sql, new MapListHandler(), new Object[]{lastExecuteJobId, limit});
         if(Utils.isEmpty(rows)) {
             return Collections.emptyList();
         }
 
-        return rows.stream().map(r -> {
-            // TODO: 2020/11/22
-            JobEntity entity = new JobEntity();
-            entity.setId(((BigInteger) r.get("id")).longValue());
-            entity.setJobId((String) r.get("job_id"));
-            entity.setExecuteOrder(((long) r.get("execute_order")));
-            return entity;
-        }).collect(Collectors.toList());
+        return rows.stream().map(this::toJobEntity).collect(Collectors.toList());
     }
-    // -----------------------------------------------------------------------------------------------------------------
 
+    // TODO: 2020/11/22
+    private JobEntity toJobEntity(Map<String, Object> row) {
+        if(row == null) {
+            return null;
+        }
 
-
+        JobEntity entity = new JobEntity();
+        entity.setId(((BigInteger) row.get("id")).longValue());
+        entity.setJobId((String) row.get("job_id"));
+        entity.setExecuteOrder(((long) row.get("execute_order")));
+        return entity;
+    }
     // -----------------------------------------------------------------------------------------------------------------
 
     @Override
@@ -140,5 +207,25 @@ public class DBBasedStore implements Store {
     @Override
     public void setDelayJobRunnable(List<IdAndExecuteOrder> updateData) {
 
+    }
+
+    // -----------------------------------------------------------------------------------------------------------------
+    //
+    private int execute(String sql, Object[] params) throws SQLException {
+        Connection conn = connThreadLocal.get();
+        if(conn != null) {
+            return runner.execute(conn, sql, params);
+        } else {
+            return runner.execute(sql, params);
+        }
+    }
+
+    public <T> T query(String sql, ResultSetHandler<T> rsh, Object[] params) throws SQLException {
+        Connection conn = connThreadLocal.get();
+        if(conn != null) {
+            return runner.query(conn, sql, rsh, params);
+        } else {
+            return runner.query(sql,rsh,  params);
+        }
     }
 }

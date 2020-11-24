@@ -34,19 +34,21 @@ public class PessimisticLockExecuteQueueTest {
         executeQueue = new PessimisticLockExecuteQueue(store);
 
         // 创建测试数据
-        for (int i = 0; i < 10; i++) {
+        log.info("create mock data begin ... ");
+        for (int i = 0; i < 1000; i++) {
             Job job = TestHelper.getJob(idGenerator, TestHelper.LOG_ACTION_ID);
             job.setExecuteOrder(executeOrderGenerator.getNextExecuteOrder());
             job.setJobStatus(JobStatus.RUNNABLE);
             store.insertJob(job);
         }
+        log.info("create mock data end ... ");
     }
 
     @Test
     public void launch() throws Exception {
 
         while(true) {
-            List<Job> nextExecutableJob = executeQueue.getNextExecutableJob(2);
+            List<Job> nextExecutableJob = executeQueue.getNextExecutableJob(20);
             if(nextExecutableJob.isEmpty()) {
                 break;
             }
