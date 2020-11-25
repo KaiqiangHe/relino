@@ -4,6 +4,7 @@ import com.relino.core.support.AbstractRunSupport;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
+import org.apache.curator.framework.recipes.leader.LeaderSelector;
 import org.apache.curator.retry.RetryNTimes;
 import org.junit.After;
 import org.junit.Before;
@@ -11,7 +12,11 @@ import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.InputStreamReader;
 import java.util.Arrays;
+import java.util.concurrent.ThreadLocalRandom;
 
 public class CuratorLeaderElectionTest {
 
@@ -21,30 +26,24 @@ public class CuratorLeaderElectionTest {
     private static final int CONNECTION_TIMEOUT = 3 * 1000;
     private static final String CONNECT_STR = "127.0.0.1:2181";
 
-    private CuratorFramework curatorClient;
-
-    @Before
-    public void setUp() throws Exception {
-        RetryPolicy retryPolicy = new RetryNTimes(10, 100);
-        curatorClient = CuratorFrameworkFactory.newClient(
-                CONNECT_STR, SESSION_TIMEOUT, CONNECTION_TIMEOUT, retryPolicy);
-        curatorClient.start();
-    }
-
-    @After
-    public void tearDown() throws Exception {
-        curatorClient.close();
-    }
-
     @Test
-    public void testLeaderElection() {
-        RelinoLeaderElectionListener appleListener = new RelinoLeaderElectionListener(
-            "apple", "/relino/apple", () -> new Apple("apple")
-        );
-        CuratorLeaderElection leaderElection = new CuratorLeaderElection(Arrays.asList(appleListener), curatorClient);
-        leaderElection.execute();
+    public void testLeaderElection() throws IOException {
+        RetryPolicy retryPolicy = new RetryNTimes(10, 100);
+        for (int i = 0; i < 10; i++) {
+            CuratorFramework client = CuratorFrameworkFactory.newClient(
+                    CONNECT_STR, SESSION_TIMEOUT, CONNECTION_TIMEOUT, retryPolicy);
+            client.start();
+            log.info("zk-{} connect success.", i);
+            String name = "apple-" + i;
+            RelinoLeaderElectionListener appleListener = new RelinoLeaderElectionListener("apple", "/relino/apple", () -> new Apple(name));
+            CuratorLeaderElection leaderElection = new CuratorLeaderElection(Arrays.asList(appleListener), client);
+            leaderElection.execute();
+        }
 
-        log.info("end ... ");
+        System.out.println("Press enter/return to quit\n");
+        new BufferedReader(new InputStreamReader(System.in)).readLine();
+
+        log.info("end .... ");
     }
 
     static class Apple extends AbstractRunSupport implements ElectionCandidate {
@@ -67,7 +66,7 @@ public class CuratorLeaderElectionTest {
 
         @Override
         protected void execute0() {
-            for (int i = 0; i < 100; i++) {
+            for (int i = 0; i < 10; i++) {
                 if(wannaStop()) {
                     break;
                 }
@@ -77,6 +76,11 @@ public class CuratorLeaderElectionTest {
                     Thread.sleep(1000);
                 } catch (InterruptedException e) {
                     throw new RuntimeException(e);
+                }
+
+                if(ThreadLocalRandom.current().nextInt(3) == 0) {
+                    log.info("{} mock stop", name);
+                    this.terminalAsync();
                 }
             }
         }
