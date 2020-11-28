@@ -1,6 +1,8 @@
 package com.relino.core.model;
 
 import com.relino.core.JobProducer.JobBuilder;
+import com.relino.core.Relino;
+import com.relino.core.db.Store;
 import com.relino.core.support.Utils;
 import com.relino.core.support.thread.Processor;
 import org.slf4j.Logger;
@@ -16,6 +18,14 @@ public class Job implements Processor {
     private static final Logger log = LoggerFactory.getLogger(Job.class);
 
     public static final String DEFAULT_JOB_CODE = Utils.EMPTY_STRING;
+
+    public static final int DELAY_EXECUTE_ORDER = -1;
+
+    private static Store store = null;
+
+    public static void setStore(Store store) {
+        Job.store = store;
+    }
 
     /**
      * 数据库自动生成的id
@@ -43,9 +53,11 @@ public class Job implements Processor {
     private long executeOrder;
 
     /**
-     * 当前job将要执行时间, 等于 mOper 或 cOper 的 willExecuteTime
+     * 当前job将要执行时间
      */
     private LocalDateTime willExecuteTime;
+
+    private boolean retryNow = false;
 
     // ------------------------------------------------------------
     /**
@@ -64,7 +76,7 @@ public class Job implements Processor {
     private final JobAttr commonAttr;
 
     /**
-     * mainOper, 不能为emptyAction
+     * mainOper
      */
     private final Oper mOper;
 
@@ -86,23 +98,71 @@ public class Job implements Processor {
         this.jobCode = builder.getJobCode();;
         this.delayJob = builder.isDelayJob();
         this.beginTime = builder.getBeginTime();
-        this.willExecuteTime = this.beginTime;
         this.commonAttr = builder.getCommonAttr();
         this.mOper = builder.getMOper();
-        this.jobStatus = JobStatus.DELAY;
-        this.executeOrder = -1; // TODO: 2020/11/20
-        this.mOper.setOperStatus(OperStatus.RUNNABLE);
+
+        setRetryDelayExecute(this.beginTime);
     }
 
     @Override
     public void process() {
-        // TODO: 2020/11/22
         try {
-            Thread.sleep(10);
-        } catch (InterruptedException e) {
+            mOper.execute(jobId, commonAttr);
+            boolean updateCommonAttr = false;
+            JobAttr resultValue = mOper.getExecuteResult().getResultValue();
+            if(!resultValue.isEmpty()) {
+                updateCommonAttr = true;
+                commonAttr.addAll(resultValue);
+            }
+
+            if(mOper.isExecuteFinished()) {
+                setExecuteFinish();
+            } else {
+                // 执行未完成、重试
+                LocalDateTime retryExecuteTime = mOper.getRetryExecuteTime();
+                if(retryExecuteTime == null) {
+                    setRetryImmediatelyExecute();
+                } else {
+                    setRetryDelayExecute(retryExecuteTime);
+                }
+            }
+
+            store.updateJob(this, updateCommonAttr);
+
+            if(this.retryNow) {
+                process();
+            }
+
+        } catch (Exception e) {
             throw new RuntimeException(e);
         }
-        log.info("待实现... ");
+    }
+
+    /**
+     * 设置job延迟执行
+     */
+    private void setRetryDelayExecute(LocalDateTime delayExecuteTime) {
+        LocalDateTime now = LocalDateTime.now();
+        if(LocalDateTime.now().minusMinutes(5).isAfter(delayExecuteTime)) {
+            throw new RuntimeException("延迟执行时间与当前时间不应超过5分钟, 当前时间[" + Utils.toStrDate(now) +
+                    ", 延迟执行时间[" + Utils.toStrDate(delayExecuteTime));
+        }
+
+        this.jobStatus = JobStatus.DELAY;
+        this.executeOrder = DELAY_EXECUTE_ORDER;
+        this.willExecuteTime = delayExecuteTime;
+        this.retryNow = false;
+    }
+
+    private void setRetryImmediatelyExecute() {
+        this.jobStatus = JobStatus.DELAY;
+        this.willExecuteTime = LocalDateTime.now();
+        this.retryNow = true;
+    }
+
+    private void setExecuteFinish() {
+        this.retryNow = false;
+        this.jobStatus = JobStatus.FINISHED;
     }
 
     // ------------------------------------------------------

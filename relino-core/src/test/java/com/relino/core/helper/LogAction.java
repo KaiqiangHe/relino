@@ -14,7 +14,13 @@ public class LogAction implements Action {
 
     @Override
     public ActionResult execute(String jobId, JobAttr commonAttr, int executeCount) {
+        JobAttr retAttr = new JobAttr();
+        if(executeCount < 3) {
+            retAttr.setString("executeError" + executeCount, System.currentTimeMillis() + "");
+            return ActionResult.buildError(retAttr);
+        }
         log.error("logValue = {}", commonAttr.getString("logValue"));
-        return ActionResult.buildSuccess();
+        retAttr.setString("executeSuccess" + executeCount, System.currentTimeMillis() + "");
+        return ActionResult.buildSuccess(retAttr);
     }
 }

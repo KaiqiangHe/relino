@@ -1,7 +1,10 @@
 package com.relino.core.model;
 
 import com.relino.core.exception.RelinoException;
+import com.relino.core.model.retry.IRetryPolicy;
 import com.relino.core.model.retry.IRetryPolicyManager;
+
+import java.time.LocalDateTime;
 
 /**
  * @author kaiqiang.he
@@ -54,6 +57,52 @@ public class Oper {
         this.retryPolicyId = retryPolicyId;
     }
 
+    /**
+     * 执行当前oper
+     */
+    public void execute(String jobId, JobAttr commonAttr) {
+        Action action = ActionManager.getAction(actionId);
+        if(action == null) {
+            throw new RelinoException("Action不存在, actionId = " + actionId);
+        }
+
+        executeCount ++;
+        executeResult = action.execute(jobId, commonAttr, executeCount);
+
+        if(executeResult.isSuccess()) {
+            operStatus = OperStatus.SUCCESS_FINISHED;
+        } else {
+            if(executeCount >= maxExecuteCount) {
+                operStatus = OperStatus.FAILED_FINISHED;
+            }
+        }
+    }
+
+    /**
+     * 获取延迟执行的时间, 如果为null 立即重试
+     */
+    public LocalDateTime getRetryExecuteTime() {
+        IRetryPolicy retryPolicy = IRetryPolicyManager.getIRetryAfter(retryPolicyId);
+        if(retryPolicy == null) {
+            throw new RuntimeException("RetryPolicy不存在, retryPolicyId = " + retryPolicyId);
+        }
+        int delaySeconds = retryPolicy.retryAfterSeconds(executeCount);
+        if(delaySeconds == 0) {
+            return null;
+        } else {
+            return LocalDateTime.now().plusSeconds(delaySeconds);
+        }
+    }
+
+    /**
+     * 执行是否结束
+     */
+    public boolean isExecuteFinished() {
+        return operStatus == OperStatus.SUCCESS_FINISHED || operStatus == OperStatus.FAILED_FINISHED;
+    }
+
+    // -----------------------------------------------------------------------------------
+
     public void setOperStatus(OperStatus operStatus) {
         this.operStatus = operStatus;
     }
@@ -90,12 +139,15 @@ public class Oper {
         return retryPolicyId;
     }
 
-    // ----------------------------------------------------------------------
+    // -----------------------------------------------------------------------------------------
     // builder start
     private Oper(OperBuilder builder) {
         this.actionId = builder.actionId;
         this.maxExecuteCount = builder.maxExecuteCount;
         this.retryPolicyId = builder.retryPolicyId;
+        this.operStatus = OperStatus.RUNNABLE;
+        this.executeCount = 0;
+        this.executeResult = null;
     }
 
     public static OperBuilder builder(String actionId) {

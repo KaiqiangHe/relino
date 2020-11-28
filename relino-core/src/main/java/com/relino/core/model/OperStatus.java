@@ -9,9 +9,8 @@ import java.util.Map;
 public enum OperStatus {
 
     /**
-     * INIT -> RUNNABLE -> SUCCESS_FINISHED | FAILED_FINISHED
+     * RUNNABLE -> SUCCESS_FINISHED | FAILED_FINISHED
      */
-    INIT(101, "初始化"),
     RUNNABLE(102, "可执行"),
     SUCCESS_FINISHED(103, "完成"),
     FAILED_FINISHED(104, "完成");
