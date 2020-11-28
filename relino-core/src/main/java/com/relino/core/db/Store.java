@@ -78,12 +78,12 @@ public abstract class Store {
      *
      * @return not null, 如果无数据返回空list
      */
-    abstract public List<Long> getRunnableDelayJobId(LocalDateTime start, LocalDateTime end, int limit);
+    abstract public List<Long> getRunnableDelayJobId(LocalDateTime start, LocalDateTime end, int limit) throws SQLException;
 
     /**
      * 设置delay job 的executeOrder, 和状态为{@link JobStatus#RUNNABLE}
      *
      * @param updateData executeOrder
      */
-    abstract public void setDelayJobRunnable(List<IdAndExecuteOrder> updateData);
+    abstract public void setDelayJobRunnable(List<IdAndExecuteOrder> elems) throws SQLException;
 }

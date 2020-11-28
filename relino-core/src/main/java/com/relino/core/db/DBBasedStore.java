@@ -3,10 +3,12 @@ package com.relino.core.db;
 import com.relino.core.exception.RelinoException;
 import com.relino.core.model.Job;
 import com.relino.core.model.JobEntity;
+import com.relino.core.model.JobStatus;
 import com.relino.core.model.Oper;
 import com.relino.core.support.Utils;
 import org.apache.commons.dbutils.QueryRunner;
 import org.apache.commons.dbutils.ResultSetHandler;
+import org.apache.commons.dbutils.handlers.ColumnListHandler;
 import org.apache.commons.dbutils.handlers.MapHandler;
 import org.apache.commons.dbutils.handlers.MapListHandler;
 
@@ -200,13 +202,40 @@ public class DBBasedStore extends Store {
     // -----------------------------------------------------------------------------------------------------------------
 
     @Override
-    public List<Long> getRunnableDelayJobId(LocalDateTime start, LocalDateTime end, int limit) {
-        return null;
+    public List<Long> getRunnableDelayJobId(LocalDateTime start, LocalDateTime end, int limit) throws SQLException {
+        String sql = "select id from job where job_status = 1 and will_execute_time >= ? and will_execute_time <= ? order by will_execute_time limit ?";
+        Object[] params = new Object[]{Utils.toStrDate(start), Utils.toStrDate(end), limit};
+        List<BigInteger> ids = query(sql, new ColumnListHandler<>("id"), params);
+        if(Utils.isEmpty(ids)) {
+            return Collections.emptyList();
+        } else {
+            return ids.stream().map(BigInteger::longValue).collect(Collectors.toList());
+        }
     }
 
     @Override
-    public void setDelayJobRunnable(List<IdAndExecuteOrder> updateData) {
+    public void setDelayJobRunnable(List<IdAndExecuteOrder> elems) throws SQLException {
 
+        if(elems == null || elems.isEmpty()) {
+            return ;
+        }
+
+        List<Object> params = new ArrayList<>();
+        StringBuilder sb = new StringBuilder();
+        sb.append("update job set job_status = ?, execute_order = ");
+        params.add(JobStatus.RUNNABLE.getCode());
+        sb.append("case id ");
+        elems.forEach(v -> {
+            sb.append("when ? then ? ");
+            params.add(v.getId());
+            params.add(v.getExecuteOrder());
+        });
+        sb.append("end ");
+        sb.append("where id in ").append(getNQuestionMark(elems.size()));
+        List<Long> ids = elems.stream().map(IdAndExecuteOrder::getId).collect(Collectors.toList());
+        params.addAll(ids);
+
+        execute(sb.toString(), params.toArray());
     }
 
     // -----------------------------------------------------------------------------------------------------------------
@@ -227,5 +256,29 @@ public class DBBasedStore extends Store {
         } else {
             return runner.query(sql,rsh,  params);
         }
+    }
+
+    /**
+     * 返回n个?, 格式如：(?, ?, ... )
+     *
+     * // TODO: 2020/11/1  优化, 缓存
+     * @return
+     */
+    private String getNQuestionMark(int n) {
+        if(n <= 0) {
+            throw new IllegalArgumentException("参数n应大于0, n = " + n);
+        }
+
+        if(n == 1) {
+            return "(?)";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("(?");
+        for (int i = 0; i < n - 1; i++) {
+            sb.append(",?");
+        }
+        sb.append(")");
+        return sb.toString();
     }
 }

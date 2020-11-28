@@ -4,10 +4,7 @@ import com.relino.core.support.AbstractRunSupport;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.framework.recipes.leader.LeaderSelector;
 import org.apache.curator.retry.RetryNTimes;
-import org.junit.After;
-import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -78,7 +75,7 @@ public class CuratorLeaderElectionTest {
                     throw new RuntimeException(e);
                 }
 
-                if(ThreadLocalRandom.current().nextInt(3) == 0) {
+                if(ThreadLocalRandom.current().nextInt(5) == 0) {
                     log.info("{} mock stop", name);
                     this.terminalAsync();
                 }

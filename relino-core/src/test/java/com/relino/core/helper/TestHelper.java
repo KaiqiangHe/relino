@@ -9,6 +9,7 @@ import com.relino.core.model.JobAttr;
 import com.relino.core.model.Oper;
 import com.relino.core.model.retry.IRetryPolicyManager;
 import com.relino.core.support.id.IdGenerator;
+import com.relino.core.support.id.UUIDIdGenerator;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 
@@ -27,7 +28,7 @@ public class TestHelper {
 
     public static DataSource getDataSource() {
         HikariConfig config = new HikariConfig();
-        config.setJdbcUrl("jdbc:mysql://localhost:3306/relino?useSSL=false");
+        config.setJdbcUrl("jdbc:mysql://localhost:3306/relino?useSSL=false&useSSL=false&serverTimezone=Asia/Shanghai");
         config.setUsername("root");
         config.setPassword("DQ971208");
         config.setAutoCommit(true);
@@ -49,6 +50,10 @@ public class TestHelper {
         Job job = new JobBuilder(idGenerator.getNext(), oper).delayJob(100).commonAttr(commonAttr).build();
 
         return job;
+    }
+
+    public static IdGenerator getIdGenerator() {
+        return new UUIDIdGenerator();
     }
 
 }

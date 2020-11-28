@@ -1,9 +1,8 @@
 package com.relino.core.support;
 
 import java.time.LocalDateTime;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import java.time.format.DateTimeFormatter;
+import java.util.*;
 import java.util.function.Predicate;
 
 /**
@@ -33,6 +32,19 @@ public class Utils {
 
     public static <K, V> boolean isEmpty(Map<K, V> map) {
         return map == null || map.isEmpty();
+    }
+
+    private static DateTimeFormatter defaultFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
+    public static String toStrDate(LocalDateTime dateTime) {
+        return dateTime.format(defaultFormatter);
+    }
+
+    public static <T> List<T> nullToEmptyList(List<T> list) {
+        if(isEmpty(list)) {
+            return new ArrayList<>();
+        }
+
+        return list;
     }
 
     // ------------------------------------------------------------------------------
