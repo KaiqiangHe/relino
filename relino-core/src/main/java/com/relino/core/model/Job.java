@@ -21,6 +21,7 @@ public class Job implements Processor {
 
     public static final int DELAY_EXECUTE_ORDER = -1;
 
+    // TODO: 2020/11/29
     private static Store store = null;
 
     public static void setStore(Store store) {

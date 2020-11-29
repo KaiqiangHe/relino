@@ -21,9 +21,12 @@ import javax.sql.DataSource;
 public class TestHelper {
 
     public static final String LOG_ACTION_ID = "logAction";
+    public static final String SleepAndLogAction_ID = "SleepAndLogAction";
 
     public static void testBootStrap() {
+
         ActionManager.register(LOG_ACTION_ID, new LogAction());
+        ActionManager.register(SleepAndLogAction_ID, new SleepAndLogAction());
     }
 
     public static DataSource getDataSource() {

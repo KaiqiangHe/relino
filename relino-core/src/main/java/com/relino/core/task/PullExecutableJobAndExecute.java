@@ -2,6 +2,7 @@ package com.relino.core.task;
 
 import com.relino.core.model.executequeue.ExecuteQueue;
 import com.relino.core.model.Job;
+import com.relino.core.register.ElectionCandidate;
 import com.relino.core.support.AbstractRunSupport;
 import com.relino.core.support.Utils;
 import com.relino.core.support.thread.QueueSizeLimitExecutor;
@@ -17,7 +18,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author kaiqiang.he
  */
-public final class PullExecutableJobAndExecute extends AbstractRunSupport {
+public final class PullExecutableJobAndExecute extends AbstractRunSupport implements ElectionCandidate {
 
     private static final Logger log = LoggerFactory.getLogger(PullExecutableJobAndExecute.class);
 
@@ -68,5 +69,15 @@ public final class PullExecutableJobAndExecute extends AbstractRunSupport {
         } catch (Exception e) {
             log.error("PullExecutableJobAndExecute error ", e);
         }
+    }
+
+    @Override
+    public void executeWhenCandidate() throws Exception {
+        execute();
+    }
+
+    @Override
+    public void stopExecute() {
+        terminal();
     }
 }

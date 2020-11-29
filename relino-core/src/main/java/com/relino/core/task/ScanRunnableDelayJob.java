@@ -2,6 +2,7 @@ package com.relino.core.task;
 
 import com.relino.core.db.IdAndExecuteOrder;
 import com.relino.core.db.Store;
+import com.relino.core.register.ElectionCandidate;
 import com.relino.core.support.AbstractRunSupport;
 import com.relino.core.support.JacksonSupport;
 import org.slf4j.Logger;
@@ -15,7 +16,7 @@ import java.util.List;
 /**
  * @author kaiqiang.he
  */
-public final class ScanRunnableDelayJob extends AbstractRunSupport {
+public final class ScanRunnableDelayJob extends AbstractRunSupport implements ElectionCandidate {
 
     private static final Logger log = LoggerFactory.getLogger(ScanRunnableDelayJob.class);
 
@@ -90,5 +91,15 @@ public final class ScanRunnableDelayJob extends AbstractRunSupport {
             }
         }
 
+    }
+
+    @Override
+    public void executeWhenCandidate() throws Exception {
+        execute();
+    }
+
+    @Override
+    public void stopExecute() {
+        terminal();
     }
 }
