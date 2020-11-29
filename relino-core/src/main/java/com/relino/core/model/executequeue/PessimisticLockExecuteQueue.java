@@ -54,10 +54,7 @@ public class PessimisticLockExecuteQueue implements ExecuteQueue {
                     if(Utils.isEmpty(rows)) {
                         return Collections.emptyList();
                     } else {
-                        return rows.stream().map(e -> {
-                            // TODO: 2020/11/24
-                            return new Job(e.getId(), e.getJobId(), e.getJobId(), "", false, LocalDateTime.now(), new JobAttr(), null);
-                        }).collect(Collectors.toList());
+                        return rows.stream().map(JobEntity::toJob).collect(Collectors.toList());
                     }
                 }, null
         );

@@ -34,6 +34,7 @@ public class StoreTest {
         store.insertJob(job);
 
         JobEntity entity = store.queryByJobId(job.getJobId());
+        Job newJob = JobEntity.toJob(entity);
         Assert.assertNotNull(entity);
     }
 
@@ -64,8 +65,9 @@ public class StoreTest {
                 1, 3, "test-retry-policy-id");
 
         String id = idGenerator.getNext();
-        Job job = new Job(null, id, id,
-                "test-job-code", true, LocalDateTime.now(), new JobAttr(), oper);
+        Job job = new Job(null, id, id, "test-job-code", true, LocalDateTime.now(),
+                JobStatus.RUNNABLE, -1, LocalDateTime.now(),
+                new JobAttr(), oper);
         job.setExecuteOrder(-1);
         job.setJobStatus(JobStatus.DELAY);
         job.setWillExecuteTime(LocalDateTime.now());

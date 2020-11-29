@@ -80,13 +80,25 @@ public class Job implements Processor {
      */
     private final Oper mOper;
 
-    public Job(Long id, String jobId, String idempotentId, String jobCode, boolean delayJob, LocalDateTime beginTime, JobAttr commonAttr, Oper mOper) {
+    public Job(Long id, String jobId, String idempotentId, String jobCode,
+               boolean delayJob, LocalDateTime beginTime,
+               JobStatus jobStatus, long executeOrder, LocalDateTime willExecuteTime,
+               JobAttr commonAttr,
+
+               Oper mOper) {
         this.id = id;
         this.jobId = jobId;
         this.idempotentId = idempotentId;
         this.jobCode = jobCode;
+
+
         this.delayJob = delayJob;
         this.beginTime = beginTime;
+
+        this.jobStatus = jobStatus;
+        this.executeOrder = executeOrder;
+        this.willExecuteTime = willExecuteTime;
+
         this.commonAttr = commonAttr;
         this.mOper = mOper;
     }
