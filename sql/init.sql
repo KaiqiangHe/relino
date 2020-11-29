@@ -18,7 +18,6 @@ CREATE TABLE job
     /* job 将要执行的时间 */
     will_execute_time datetime        not null comment '',
     job_status          tinyint not null comment 'job 状态: delay 1, runnable 2, finished 3',
-
     /* 执行顺序. 延迟 -1, 立即执行 1, 延迟变为可执行后 自增的数 */
     execute_order       bigint not null default -1 comment '',
 

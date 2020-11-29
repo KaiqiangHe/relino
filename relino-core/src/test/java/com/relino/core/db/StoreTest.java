@@ -29,7 +29,7 @@ public class StoreTest {
     }
 
     @Test
-    public void insertJob() throws SQLException {
+    public void testInsertAndQuery() throws SQLException {
         Job job = createTestJob();
         store.insertJob(job);
 

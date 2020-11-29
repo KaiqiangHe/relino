@@ -17,10 +17,7 @@ import java.math.BigInteger;
 import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.stream.Collectors;
 
 /**
@@ -187,7 +184,6 @@ public class DBBasedStore extends Store {
         return rows.stream().map(this::toJobEntity).collect(Collectors.toList());
     }
 
-    // TODO: 2020/11/22
     private JobEntity toJobEntity(Map<String, Object> row) {
         if(row == null) {
             return null;
@@ -196,7 +192,26 @@ public class DBBasedStore extends Store {
         JobEntity entity = new JobEntity();
         entity.setId(((BigInteger) row.get("id")).longValue());
         entity.setJobId((String) row.get("job_id"));
+        entity.setIdempotentId((String) row.get("idempotent_id"));
+        entity.setJobCode((String) row.get("job_code"));
+
+        entity.setIsDelayJob((Integer) row.get("is_delay_job"));
+        entity.setBeginTime(Utils.toLocalDateTime((Date) row.get("begin_time")));
+
+        entity.setCommonAttr((String) row.get("common_attr"));
+
+        entity.setWillExecuteTime(Utils.toLocalDateTime((Date) row.get("will_execute_time")));
+        entity.setJobStatus((Integer) row.get("job_status"));
         entity.setExecuteOrder(((long) row.get("execute_order")));
+
+        entity.setMActionId((String) row.get("m_action_id"));
+        entity.setMOperStatus((Integer) row.get("m_oper_status"));
+        entity.setMExecuteCount((Integer) row.get("m_execute_count"));
+        entity.setMRetryPolicyId((String) row.get("m_retry_policy_id"));
+        entity.setMMaxRetry((Integer) row.get("m_max_retry"));
+
+        entity.setCreateTime(Utils.toLocalDateTime((Date) row.get("create_time")));
+
         return entity;
     }
     // -----------------------------------------------------------------------------------------------------------------
