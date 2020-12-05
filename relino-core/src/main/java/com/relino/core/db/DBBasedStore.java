@@ -19,6 +19,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Collectors;
 
 /**
@@ -330,13 +331,25 @@ public class DBBasedStore extends Store {
         }
     }
 
+    // --------------------------------------------------------------------------------
+    private static final int maxCacheN = 500;
+    private static final Map<Integer, String> nQuestionMarkCaches = new ConcurrentHashMap<>();
     /**
      * 返回n个?, 格式如：(?, ?, ... )
-     *
-     * // TODO: 2020/11/1  优化, 缓存
-     * @return
      */
-    private String getNQuestionMark(int n) {
+    private static String getNQuestionMark(int n) {
+        if(n <= maxCacheN) {
+            String value = nQuestionMarkCaches.get(n);
+            if(value == null) {
+                value = generateNQuestionMark(n);
+                nQuestionMarkCaches.put(n, value);
+            }
+            return value;
+        } else {
+            return generateNQuestionMark(n);
+        }
+    }
+    private static String generateNQuestionMark(int n) {
         if(n <= 0) {
             throw new IllegalArgumentException("参数n应大于0, n = " + n);
         }

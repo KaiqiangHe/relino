@@ -47,11 +47,11 @@ public class RelinoTest {
 
         for (int i = 0; i < 50; i++) {
             new Thread(() -> {
-                for (int count = 0; count < 10; count++) {
+                for (int count = 0; count < 200; count++) {
                     Oper mOper = Oper.builder(TestHelper.SleepAndLogAction_ID).maxExecuteCount(5).build();
                     JobAttr initAttr = new JobAttr();
                     initAttr.setLong("sleepTime", 10);
-                    Job job = jobProducer.builder(mOper).commonAttr(initAttr).delayJob(10 + ThreadLocalRandom.current().nextInt(50)).build();
+                    Job job = jobProducer.builder(mOper).commonAttr(initAttr).delayJob(10 + ThreadLocalRandom.current().nextInt(100)).build();
                     jobProducer.createJob(job);
                     try {
                         Thread.sleep(100);
