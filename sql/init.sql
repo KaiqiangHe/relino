@@ -35,7 +35,6 @@ CREATE TABLE job
     UNIQUE uniq_idempotent_id (idempotent_id),
     index  idx_execute_order(execute_order),
 
-    /* todo job_status 经常变且区分度不高, 想办法只用will_execute_time做索引 */
     index  idx_will_execute_time_job_status(will_execute_time, job_status)
 ) ENGINE = INNODB
   DEFAULT CHARSET = utf8mb4;
@@ -52,3 +51,18 @@ CREATE TABLE kv
 
 insert into kv(k, v) value ('execute_queue_cursor', '-1');
 insert into kv(k, v) value ('execute_order', '1');
+insert into kv(k, v) value ('dead_job_watch_dog', '-1');
+
+drop table if exists execute_time;
+CREATE TABLE execute_time
+(
+    id                  BIGINT UNSIGNED NOT NULL AUTO_INCREMENT COMMENT 'id',
+    execute_order       bigint not null  comment '执行job的execute_order',
+    execute_job_time    datetime        not null comment '执行job的时间',
+
+    primary key (id),
+    key idx_id_execute_job_time(id, execute_job_time)
+
+) ENGINE = INNODB
+  DEFAULT CHARSET = utf8mb4;
+

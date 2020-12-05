@@ -1,5 +1,6 @@
-package com.relino.core.model;
+package com.relino.core.model.db;
 
+import com.relino.core.model.*;
 import com.relino.core.support.Utils;
 
 import java.time.LocalDateTime;

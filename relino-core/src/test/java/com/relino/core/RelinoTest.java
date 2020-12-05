@@ -10,6 +10,7 @@ import com.relino.core.model.executequeue.PessimisticLockExecuteQueue;
 import com.relino.core.support.id.IdGenerator;
 import com.relino.core.support.id.UUIDIdGenerator;
 import com.relino.core.support.thread.QueueSizeLimitExecutor;
+import com.relino.core.task.DeadJobWatchDog;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -32,7 +33,7 @@ public class RelinoTest {
         Store store = TestHelper.getStore();
         IdGenerator idGenerator = new UUIDIdGenerator();
         ExecuteQueue executeQueue = new PessimisticLockExecuteQueue(store);
-        QueueSizeLimitExecutor<Job> jotExecutor = new QueueSizeLimitExecutor<>("job", 5, 30, 1000);
+        QueueSizeLimitExecutor<Job> jotExecutor = new QueueSizeLimitExecutor<>("job", 5, 20, 3000);
 
         Job.setStore(store);
 
@@ -44,9 +45,9 @@ public class RelinoTest {
         // 一个线程不断提交job
         JobProducer jobProducer = app.jobProducer;
 
-        for (int i = 0; i < 10; i++) {
+        for (int i = 0; i < 50; i++) {
             new Thread(() -> {
-                for (int count = 0; count < 4000; count++) {
+                for (int count = 0; count < 100; count++) {
                     Oper mOper = Oper.builder(TestHelper.SleepAndLogAction_ID).maxExecuteCount(5).build();
                     JobAttr initAttr = new JobAttr();
                     initAttr.setLong("sleepTime", 10);
@@ -67,4 +68,9 @@ public class RelinoTest {
         log.info("end .... ");
     }
 
+    @Test
+    public void testDeadJobWatchDog() {
+        DeadJobWatchDog watchDog = new DeadJobWatchDog(app.store, 1);
+        watchDog.execute();
+    }
 }

@@ -2,7 +2,8 @@ package com.relino.core.db;
 
 import com.relino.core.exception.RelinoException;
 import com.relino.core.model.Job;
-import com.relino.core.model.JobEntity;
+import com.relino.core.model.db.ExecuteTimeEntity;
+import com.relino.core.model.db.JobEntity;
 import com.relino.core.model.JobStatus;
 import com.relino.core.model.Oper;
 import com.relino.core.support.Utils;
@@ -251,6 +252,62 @@ public class DBBasedStore extends Store {
         params.addAll(ids);
 
         execute(sb.toString(), params.toArray());
+    }
+
+    @Override
+    public void insertExecuteRecord(long executeOrder, LocalDateTime time) throws SQLException {
+        String sql = "insert into execute_time(execute_order, execute_job_time) value (?, ?)";
+        Object[] params = new Object[]{executeOrder, Utils.toStrDate(time)};
+
+        execute(sql, params);
+    }
+
+    @Override
+    public ExecuteTimeEntity selectDeadJobByTime(LocalDateTime time) throws SQLException {
+        String sql = "select id, execute_order, execute_job_time from execute_time where execute_job_time <= ? order by id limit 1";
+        Map<String, Object> row = query(sql, new MapHandler(), new Object[]{Utils.toStrDate(time)});
+        if(row == null) {
+            return null;
+        }
+
+        ExecuteTimeEntity ret = new ExecuteTimeEntity();
+        ret.setId(((BigInteger) row.get("id")).longValue());
+        ret.setExecuteOrder(((long) row.get("execute_order")));
+        ret.setExecuteJobTime(Utils.toLocalDateTime((Date) row.get("execute_job_time")));
+        return ret;
+    }
+
+    @Override
+    public int deleteExecuteTimeRecord(long id) throws SQLException {
+        String sql = "delete from execute_time where id = ?";
+        return execute(sql, new Object[]{id});
+    }
+
+    @Override
+    public List<Long> getDeadJobs(long startExecuteOrder, long endExecuteOrder) throws SQLException {
+        String sql = "select id from job where job_status = 2 and execute_order > ? and execute_order <= ?";
+        List<BigInteger> ids = query(sql, new ColumnListHandler<>("id"), new Object[]{startExecuteOrder, endExecuteOrder});
+        if(Utils.isEmpty(ids)) {
+            return Collections.emptyList();
+        } else {
+            return ids.stream().map(BigInteger::longValue).collect(Collectors.toList());
+        }
+    }
+
+    @Override
+    public int updateDeadJobs(List<Long> ids, LocalDateTime willExecuteTime) throws SQLException {
+        if(Utils.isEmpty(ids)) {
+            return 0;
+        }
+
+        int idSize = ids.size();
+        String sql = "update job set job_status = 1, will_execute_time = ? where id in " + getNQuestionMark(idSize);
+        Object[] param = new Object[idSize + 1];
+        param[0] = Utils.toStrDate(willExecuteTime);
+        for (int i = 0; i < idSize; i++) {
+            param[i + 1] = ids.get(i);
+        }
+        return execute(sql, param);
     }
 
     // -----------------------------------------------------------------------------------------------------------------

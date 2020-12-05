@@ -1,7 +1,8 @@
 package com.relino.core.db;
 
 import com.relino.core.model.Job;
-import com.relino.core.model.JobEntity;
+import com.relino.core.model.db.ExecuteTimeEntity;
+import com.relino.core.model.db.JobEntity;
 import com.relino.core.model.JobStatus;
 
 import javax.sql.DataSource;
@@ -18,6 +19,10 @@ public abstract class Store {
     protected DataSource dataSource;
 
     public Store(DataSource dataSource) {
+        this.dataSource = dataSource;
+    }
+
+    public void setDataSource(DataSource dataSource) {
         this.dataSource = dataSource;
     }
 
@@ -41,7 +46,7 @@ public abstract class Store {
         }
     }
 
-    // -----------------------------------------------------------
+    // -----------------------------------------------------------------------------
     /**
      * 插入一条新job，返回受影响的行数
      */
@@ -86,4 +91,20 @@ public abstract class Store {
      * @param updateData executeOrder
      */
     abstract public void setDelayJobRunnable(List<IdAndExecuteOrder> elems) throws SQLException;
+
+    abstract public void insertExecuteRecord(long executeOrder, LocalDateTime time) throws SQLException;
+
+    abstract public ExecuteTimeEntity selectDeadJobByTime(LocalDateTime time) throws SQLException;
+
+    abstract public int deleteExecuteTimeRecord(long id) throws SQLException;
+
+    /**
+     * 查询处于(startExecuteOrder, endExecuteOrder] 且 jobStatus = 2
+     */
+    abstract public List<Long> getDeadJobs(long startExecuteOrder, long endExecuteOrder) throws SQLException;
+
+    /**
+     * 设置job为延迟job
+     */
+    abstract public int updateDeadJobs(List<Long> ids, LocalDateTime willExecuteTime) throws SQLException;
 }

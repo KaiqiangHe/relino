@@ -2,11 +2,8 @@ package com.relino.core.model.executequeue;
 
 import com.relino.core.db.Store;
 import com.relino.core.model.Job;
-import com.relino.core.model.JobAttr;
-import com.relino.core.model.JobEntity;
+import com.relino.core.model.db.JobEntity;
 import com.relino.core.support.Utils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 import java.util.Collections;
@@ -48,6 +45,7 @@ public class PessimisticLockExecuteQueue implements ExecuteQueue {
 
                     if(!Utils.isEmpty(rows)) {
                         long lastExecuteOrder = rows.get(rows.size() - 1).getExecuteOrder();
+                        store.insertExecuteRecord(lastExecuteOrder, LocalDateTime.now());
                         store.kvUpdateValue(EXECUTE_QUEUE_CURSOR, Long.toString(lastExecuteOrder));
                     }
 

@@ -22,8 +22,7 @@ public final class ScanRunnableDelayJob extends AbstractRunSupport implements El
 
     private static final String EXECUTE_ORDER_KEY = "execute_order";
     private static final int BATCH_SIZE = 200;
-    public static final LocalDateTime START_DATE_TIME =
-            LocalDateTime.of(1970, 1, 1, 0, 0, 1);
+    private static final int TIME_STEP = 10;
 
     private Store store;
     private int batchSize;
@@ -51,11 +50,10 @@ public final class ScanRunnableDelayJob extends AbstractRunSupport implements El
                 long executeOrder = Long.parseLong(value);
 
                 // 获取一批可执行的延迟job
-                // TODO: 2020/11/28  START_DATE_TIME 这可以优化
-                List<Long> ids = store.getRunnableDelayJobId(START_DATE_TIME, now, batchSize);
+                List<Long> ids = store.getRunnableDelayJobId(now.minusMinutes(TIME_STEP), now, batchSize);
                 if(ids.isEmpty()) {
                     sleep = true;
-                    log.debug("无延迟job, time = {}", System.currentTimeMillis() - start);
+                    log.info("无延迟job, time = {}", System.currentTimeMillis() - start);
                 } else {
                     // 更新可执行job
                     List<IdAndExecuteOrder> updateData = new ArrayList<>();
@@ -69,7 +67,7 @@ public final class ScanRunnableDelayJob extends AbstractRunSupport implements El
                     store.kvUpdateValue(EXECUTE_ORDER_KEY, Long.toString(executeOrder));
 
                     sleep = false;
-                    log.debug("更新延迟job, ids = {}, time = {}", JacksonSupport.toJson(ids), System.currentTimeMillis() - start);
+                    log.info("更新延迟job, ids = {}, time = {}", JacksonSupport.toJson(ids), System.currentTimeMillis() - start);
                 }
 
                 store.commitTx();

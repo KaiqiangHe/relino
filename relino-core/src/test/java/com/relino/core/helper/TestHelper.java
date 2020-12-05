@@ -37,7 +37,7 @@ public class TestHelper {
         config.setAutoCommit(true);
         config.setConnectionTimeout(5 * 1000);  // 5s
         config.setMinimumIdle(5);
-        config.setMinimumIdle(10);
+        config.setMaximumPoolSize(20);
 
         return new HikariDataSource(config);
     }

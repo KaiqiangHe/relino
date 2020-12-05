@@ -2,6 +2,8 @@ package com.relino.core.db;
 
 import com.relino.core.helper.TestHelper;
 import com.relino.core.model.*;
+import com.relino.core.model.db.ExecuteTimeEntity;
+import com.relino.core.model.db.JobEntity;
 import com.relino.core.support.id.IdGenerator;
 import com.relino.core.support.id.UUIDIdGenerator;
 import org.junit.Assert;
@@ -237,6 +239,17 @@ public class StoreTest {
         list = store.getRunnableDelayJobId(now, nowPlus2H, 2);
         Assert.assertEquals(job1Id, list.get(0).longValue());
         Assert.assertEquals(job2Id, list.get(1).longValue());
+    }
+
+    @Test
+    public void testSelectDeadJobByTime() throws SQLException {
+        LocalDateTime time = LocalDateTime.of(2011, 1, 1, 0, 0, 0, 0);
+        store.insertExecuteRecord(10, time);
+        ExecuteTimeEntity entity = store.selectDeadJobByTime(time.minusMinutes(10));
+        store.deleteExecuteTimeRecord(entity.getId());
+        entity = store.selectDeadJobByTime(time.minusMinutes(10));
+
+        log.info("end ... ");
     }
 }
 

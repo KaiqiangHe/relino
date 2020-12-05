@@ -7,6 +7,7 @@ import com.relino.core.register.CuratorLeaderElection;
 import com.relino.core.register.RelinoLeaderElectionListener;
 import com.relino.core.support.id.IdGenerator;
 import com.relino.core.support.thread.QueueSizeLimitExecutor;
+import com.relino.core.task.DeadJobWatchDog;
 import com.relino.core.task.PullExecutableJobAndExecute;
 import com.relino.core.task.ScanRunnableDelayJob;
 import org.apache.curator.RetryPolicy;
@@ -63,7 +64,13 @@ public class Relino {
                 () -> new PullExecutableJobAndExecute(pullJobBatchSize, executeQueue, jobExecutor)
         );
 
-        curatorLeaderElection = new CuratorLeaderElection(Arrays.asList(scanRunnableDelayJobListener, pullExecutableJobListener), curatorClient);
+        RelinoLeaderElectionListener deadJobWatchDog = new RelinoLeaderElectionListener(
+                "deadJobWatchDog",
+                "/relino/deadJobWatchDog",
+                () -> new DeadJobWatchDog(store, 5)
+        );
+
+        curatorLeaderElection = new CuratorLeaderElection(Arrays.asList(scanRunnableDelayJobListener, pullExecutableJobListener, deadJobWatchDog), curatorClient);
         curatorLeaderElection.execute();
     }
 }
