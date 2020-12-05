@@ -4,8 +4,6 @@ import com.relino.core.helper.TestHelper;
 import com.relino.core.db.Store;
 import com.relino.core.model.Job;
 import com.relino.core.model.JobStatus;
-import com.relino.core.support.executeorder.ExecuteOrderGenerator;
-import com.relino.core.support.executeorder.TimeExecuteOrderGenerator;
 import com.relino.core.support.id.IdGenerator;
 import com.relino.core.support.id.UUIDIdGenerator;
 import org.junit.Before;
@@ -23,21 +21,18 @@ public class PessimisticLockExecuteQueueTest {
     private ExecuteQueue executeQueue;
     private Store store;
     private IdGenerator idGenerator;
-    private ExecuteOrderGenerator executeOrderGenerator;
 
     @Before
     public void setUp() throws Exception {
         TestHelper.testBootStrap();
         idGenerator = new UUIDIdGenerator();
         store = TestHelper.getStore();
-        executeOrderGenerator = new TimeExecuteOrderGenerator();
         executeQueue = new PessimisticLockExecuteQueue(store);
 
         // 创建测试数据
         log.info("create mock data begin ... ");
         for (int i = 0; i < 1000; i++) {
             Job job = TestHelper.getJob(idGenerator, TestHelper.LOG_ACTION_ID);
-            job.setExecuteOrder(executeOrderGenerator.getNextExecuteOrder());
             job.setJobStatus(JobStatus.RUNNABLE);
             store.insertJob(job);
         }

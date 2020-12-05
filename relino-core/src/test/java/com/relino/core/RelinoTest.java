@@ -47,7 +47,7 @@ public class RelinoTest {
 
         for (int i = 0; i < 50; i++) {
             new Thread(() -> {
-                for (int count = 0; count < 100; count++) {
+                for (int count = 0; count < 10; count++) {
                     Oper mOper = Oper.builder(TestHelper.SleepAndLogAction_ID).maxExecuteCount(5).build();
                     JobAttr initAttr = new JobAttr();
                     initAttr.setLong("sleepTime", 10);
