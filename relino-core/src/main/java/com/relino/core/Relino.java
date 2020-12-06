@@ -3,9 +3,11 @@ package com.relino.core;
 import com.relino.core.db.Store;
 import com.relino.core.model.Job;
 import com.relino.core.model.executequeue.ExecuteQueue;
+import com.relino.core.model.executequeue.PessimisticLockExecuteQueue;
 import com.relino.core.register.CuratorLeaderElection;
 import com.relino.core.register.RelinoLeaderElectionListener;
 import com.relino.core.support.id.IdGenerator;
+import com.relino.core.support.id.UUIDIdGenerator;
 import com.relino.core.support.thread.QueueSizeLimitExecutor;
 import com.relino.core.task.DeadJobWatchDog;
 import com.relino.core.task.PullExecutableJobAndExecute;
@@ -36,14 +38,15 @@ public class Relino {
     public final CuratorFramework curatorClient;
     public final CuratorLeaderElection curatorLeaderElection;
 
-    public Relino(Store store, IdGenerator idGenerator, QueueSizeLimitExecutor<Job> jobExecutor,
-                  ExecuteQueue executeQueue, int pullJobBatchSize, int scanRunnableJobBatchSize) {
+    public Relino(Store store, int pullJobBatchSize, int scanRunnableJobBatchSize, int watchDogMinutes) {
         this.store = store;
-        this.idGenerator = idGenerator;
-        this.jotExecutor = jobExecutor;
-        this.executeQueue = executeQueue;
+        this.idGenerator = new UUIDIdGenerator();
+        this.jotExecutor = new QueueSizeLimitExecutor<>("job", 5, 20, 3000);
+        this.executeQueue = new PessimisticLockExecuteQueue(store);
         this.pullJobBatchSize = pullJobBatchSize;
         this.scanRunnableJobBatchSize = scanRunnableJobBatchSize;
+
+
         this.jobProducer = new JobProducer(store, idGenerator);
 
         // 创建Curator Client
@@ -61,13 +64,13 @@ public class Relino {
         RelinoLeaderElectionListener pullExecutableJobListener = new RelinoLeaderElectionListener(
                 "pullExecutableJob",
                 "/relino/pullExecutableJob",
-                () -> new PullExecutableJobAndExecute(pullJobBatchSize, executeQueue, jobExecutor)
+                () -> new PullExecutableJobAndExecute(pullJobBatchSize, executeQueue, this.jotExecutor)
         );
 
         RelinoLeaderElectionListener deadJobWatchDog = new RelinoLeaderElectionListener(
                 "deadJobWatchDog",
                 "/relino/deadJobWatchDog",
-                () -> new DeadJobWatchDog(store, 5)
+                () -> new DeadJobWatchDog(store, watchDogMinutes)
         );
 
         curatorLeaderElection = new CuratorLeaderElection(Arrays.asList(scanRunnableDelayJobListener, pullExecutableJobListener, deadJobWatchDog), curatorClient);

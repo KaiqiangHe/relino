@@ -31,13 +31,9 @@ public class RelinoTest {
     public void setUp() {
         TestHelper.testBootStrap();
         Store store = TestHelper.getStore();
-        IdGenerator idGenerator = new UUIDIdGenerator();
-        ExecuteQueue executeQueue = new PessimisticLockExecuteQueue(store);
-        QueueSizeLimitExecutor<Job> jotExecutor = new QueueSizeLimitExecutor<>("job", 5, 20, 3000);
-
         Job.setStore(store);
 
-        app = new Relino(store, idGenerator, jotExecutor, executeQueue, 100, 100);
+        app = new Relino(store, 100, 100, 5);
     }
 
     @Test
@@ -45,9 +41,9 @@ public class RelinoTest {
         // 一个线程不断提交job
         JobProducer jobProducer = app.jobProducer;
 
-        for (int i = 0; i < 50; i++) {
+        /*for (int i = 0; i < 50; i++) {
             new Thread(() -> {
-                for (int count = 0; count < 200; count++) {
+                for (int count = 0; count < 20; count++) {
                     Oper mOper = Oper.builder(TestHelper.SleepAndLogAction_ID).maxExecuteCount(5).build();
                     JobAttr initAttr = new JobAttr();
                     initAttr.setLong("sleepTime", 10);
@@ -60,7 +56,7 @@ public class RelinoTest {
                     }
                 }
             }).start();
-        }
+        }*/
 
         System.out.println("Press enter/return to quit\n");
         new BufferedReader(new InputStreamReader(System.in)).readLine();
