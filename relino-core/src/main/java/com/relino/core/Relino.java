@@ -27,12 +27,16 @@ public class Relino {
     private static final int SESSION_TIMEOUT = 30 * 1000;
     private static final int CONNECTION_TIMEOUT = 3 * 1000;
     private static final String CONNECT_STR = "127.0.0.1:2181";
+    private static final int DEFAULT_WATCH_DOG_PER_SECOND = 1;
+
 
     public final Store store;
     public final IdGenerator idGenerator;
     public final QueueSizeLimitExecutor<Job> jotExecutor;
     public final ExecuteQueue executeQueue;
     public final JobProducer jobProducer;
+    public final PullExecutableJobAndExecute pullExecutableJobAndExecute;
+
     public final int pullJobBatchSize;
     public final int scanRunnableJobBatchSize;
     public final CuratorFramework curatorClient;
@@ -45,7 +49,7 @@ public class Relino {
         this.executeQueue = new PessimisticLockExecuteQueue(store);
         this.pullJobBatchSize = pullJobBatchSize;
         this.scanRunnableJobBatchSize = scanRunnableJobBatchSize;
-
+        this.pullExecutableJobAndExecute = new PullExecutableJobAndExecute(pullJobBatchSize, DEFAULT_WATCH_DOG_PER_SECOND, executeQueue, jotExecutor);
 
         this.jobProducer = new JobProducer(store, idGenerator);
 
@@ -61,19 +65,13 @@ public class Relino {
                 "/relino/scanRunnableDelayJob",
                 () -> new ScanRunnableDelayJob(store, 100));
 
-        RelinoLeaderElectionListener pullExecutableJobListener = new RelinoLeaderElectionListener(
-                "pullExecutableJob",
-                "/relino/pullExecutableJob",
-                () -> new PullExecutableJobAndExecute(pullJobBatchSize, executeQueue, this.jotExecutor)
-        );
-
         RelinoLeaderElectionListener deadJobWatchDog = new RelinoLeaderElectionListener(
                 "deadJobWatchDog",
                 "/relino/deadJobWatchDog",
                 () -> new DeadJobWatchDog(store, watchDogMinutes)
         );
 
-        curatorLeaderElection = new CuratorLeaderElection(Arrays.asList(scanRunnableDelayJobListener, pullExecutableJobListener, deadJobWatchDog), curatorClient);
+        curatorLeaderElection = new CuratorLeaderElection(Arrays.asList(scanRunnableDelayJobListener, deadJobWatchDog), curatorClient);
         curatorLeaderElection.execute();
     }
 }
