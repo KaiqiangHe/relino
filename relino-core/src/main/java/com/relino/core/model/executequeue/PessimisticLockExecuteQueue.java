@@ -28,6 +28,8 @@ public class PessimisticLockExecuteQueue implements ExecuteQueue {
     /**
      * 注意：
      * 一次只允许一个线程执行, 防止多个线程并发而大量占用数据库链接
+     *
+     * @return not null, maybe empty
      */
     @Override
     public synchronized List<Job> getNextExecutableJob(int batchSize) throws Exception {

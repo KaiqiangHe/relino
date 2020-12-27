@@ -1,5 +1,7 @@
 package com.relino.core.support;
 
+import sun.util.resources.cldr.mk.TimeZoneNames_mk;
+
 import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
@@ -68,6 +70,16 @@ public class Utils {
     public static <T> void check(T param, Predicate<T> predicate) {
         if(predicate.test(param)) {
             throw new IllegalArgumentException();
+        }
+    }
+    public static void checkNoNull(Object param) {
+        if(param == null) {
+            throw new IllegalArgumentException("参数不能为null");
+        }
+    }
+    public static void checkNoNull(Object param, String message) {
+        if(param == null) {
+            throw new IllegalArgumentException(message);
         }
     }
     public static void checkNonEmpty(String str) {

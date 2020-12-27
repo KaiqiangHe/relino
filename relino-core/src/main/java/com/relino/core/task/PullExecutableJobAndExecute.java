@@ -1,5 +1,6 @@
 package com.relino.core.task;
 
+import com.relino.core.exception.HandleException;
 import com.relino.core.model.executequeue.ExecuteQueue;
 import com.relino.core.model.Job;
 import com.relino.core.support.Utils;
@@ -13,10 +14,10 @@ import java.util.concurrent.Executors;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.TimeUnit;
+import java.util.stream.Collectors;
 
 /**
  * 获取可执行的job并提交执行
- * // TODO: 2020/11/22  test
  *
  * @author kaiqiang.he
  */
@@ -42,16 +43,18 @@ public final class PullExecutableJobAndExecute {
         this.executor = executor;
 
         watchFuture = watchExecutor.scheduleAtFixedRate(() -> {
+            log.info("PullExecutableJobAndExecute开始运行");
             try {
                 pullJob();
             } catch (Throwable t) {
-                log.error("Unexpected error occur at pullJob, cause: ", t);
+                HandleException.handleUnExpectedException(t);
             }
+            log.info("PullExecutableJobAndExecute运行结束");
         }, 0, watchPerSeconds, TimeUnit.SECONDS);
     }
 
     protected void pullJob() throws Exception {
-        log.info("pullJob start ...");
+        long start = System.currentTimeMillis();
         List<Job> jobs = executeQueue.getNextExecutableJob(pullSize);
         while (!Utils.isEmpty(jobs)) {
             int index = 0;
@@ -62,6 +65,11 @@ public final class PullExecutableJobAndExecute {
                 }
             }
             jobs = executeQueue.getNextExecutableJob(pullSize);
+        }
+        if(log.isDebugEnabled()) {
+            log.debug("pull job ids = [{}], time = {}",
+                    jobs.stream().map(Job::getJobId).collect(Collectors.joining(",")),
+                    System.currentTimeMillis() - start);
         }
     }
 }

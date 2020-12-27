@@ -100,6 +100,8 @@ public abstract class Store {
 
     /**
      * 查询处于(startExecuteOrder, endExecuteOrder] 且 jobStatus = 2
+     *
+     * @return not null
      */
     abstract public List<Long> getDeadJobs(long startExecuteOrder, long endExecuteOrder) throws SQLException;
 
