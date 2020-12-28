@@ -5,11 +5,6 @@ import com.relino.core.helper.TestHelper;
 import com.relino.core.model.Job;
 import com.relino.core.model.JobAttr;
 import com.relino.core.model.Oper;
-import com.relino.core.model.executequeue.ExecuteQueue;
-import com.relino.core.model.executequeue.PessimisticLockExecuteQueue;
-import com.relino.core.support.id.IdGenerator;
-import com.relino.core.support.id.UUIDIdGenerator;
-import com.relino.core.support.thread.QueueSizeLimitExecutor;
 import com.relino.core.task.DeadJobWatchDog;
 import org.junit.Before;
 import org.junit.Test;
@@ -31,7 +26,6 @@ public class RelinoTest {
     public void setUp() {
         TestHelper.testBootStrap();
         Store store = TestHelper.getStore();
-        Job.setStore(store);
 
         app = new Relino(store, 100, 100, 5);
     }

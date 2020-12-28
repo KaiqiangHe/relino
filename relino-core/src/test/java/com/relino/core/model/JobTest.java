@@ -27,7 +27,6 @@ public class JobTest {
         idGenerator = TestHelper.getIdGenerator();
         store = TestHelper.getStore();
         jobProducer = new JobProducer(store, idGenerator);
-        Job.setStore(store);
     }
 
     @Test
@@ -55,7 +54,5 @@ public class JobTest {
                 .build();
 
         jobProducer.createJob(job);
-
-        job.process();
     }
 }

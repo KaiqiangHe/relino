@@ -35,6 +35,7 @@ public class Relino {
     public final QueueSizeLimitExecutor<Job> jotExecutor;
     public final ExecuteQueue executeQueue;
     public final JobProducer jobProducer;
+    public final JobProcessor jobProcessor;
     public final PullExecutableJobAndExecute pullExecutableJobAndExecute;
 
     public final int pullJobBatchSize;
@@ -45,7 +46,8 @@ public class Relino {
     public Relino(Store store, int pullJobBatchSize, int scanRunnableJobBatchSize, int watchDogMinutes) {
         this.store = store;
         this.idGenerator = new UUIDIdGenerator();
-        this.jotExecutor = new QueueSizeLimitExecutor<>("job", 5, 20, 3000);
+        this.jobProcessor = new JobProcessor(store);
+        this.jotExecutor = new QueueSizeLimitExecutor<>("job", 5, 20, 3000, this.jobProcessor);
         this.executeQueue = new PessimisticLockExecuteQueue(store);
         this.pullJobBatchSize = pullJobBatchSize;
         this.scanRunnableJobBatchSize = scanRunnableJobBatchSize;
