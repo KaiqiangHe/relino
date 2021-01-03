@@ -1,12 +1,7 @@
 package com.relino.core.model;
 
 import com.relino.core.JobProducer.JobBuilder;
-import com.relino.core.Relino;
-import com.relino.core.db.Store;
 import com.relino.core.support.Utils;
-import com.relino.core.support.thread.Processor;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 
@@ -49,6 +44,9 @@ public class Job {
      */
     private LocalDateTime willExecuteTime;
 
+    /**
+     * 是否立即重试
+     */
     private boolean retryNow = false;
 
     // ------------------------------------------------------------
@@ -105,13 +103,13 @@ public class Job {
         this.commonAttr = builder.getCommonAttr();
         this.mOper = builder.getMOper();
 
-        setRetryDelayExecute(this.beginTime);
+        setDelayExecute(this.beginTime);
     }
 
     /**
      * 设置job延迟执行
      */
-    public void setRetryDelayExecute(LocalDateTime delayExecuteTime) {
+    public void setDelayExecute(LocalDateTime delayExecuteTime) {
         LocalDateTime now = LocalDateTime.now();
         if(LocalDateTime.now().minusMinutes(5).isAfter(delayExecuteTime)) {
             throw new RuntimeException("延迟执行时间与当前时间不应超过5分钟, 当前时间[" + Utils.toStrDate(now) +
@@ -124,15 +122,21 @@ public class Job {
         this.retryNow = false;
     }
 
-    public void setRetryImmediatelyExecute() {
+    /**
+     * 设置job立即重试
+     */
+    public void setImmediatelyRetryExecute() {
         this.jobStatus = JobStatus.DELAY;
         this.willExecuteTime = LocalDateTime.now();
         this.retryNow = true;
     }
 
+    /**
+     * 设置job执行结束
+     */
     public void setExecuteFinish() {
-        this.retryNow = false;
         this.jobStatus = JobStatus.FINISHED;
+        this.retryNow = false;
     }
 
     // ------------------------------------------------------

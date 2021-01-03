@@ -45,9 +45,9 @@ public class JobProcessor implements Processor<Job> {
                 // 执行未完成、重试
                 LocalDateTime retryExecuteTime = mOper.getRetryExecuteTime();
                 if(retryExecuteTime == null) {
-                    job.setRetryImmediatelyExecute();
+                    job.setImmediatelyRetryExecute();
                 } else {
-                    job.setRetryDelayExecute(retryExecuteTime);
+                    job.setDelayExecute(retryExecuteTime);
                 }
             }
 
