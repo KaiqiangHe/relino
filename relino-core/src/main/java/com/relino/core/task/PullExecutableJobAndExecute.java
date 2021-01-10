@@ -2,7 +2,7 @@ package com.relino.core.task;
 
 import com.relino.core.exception.HandleException;
 import com.relino.core.model.executequeue.ExecuteQueue;
-import com.relino.core.model.Job;
+import com.relino.core.model.BaseJob;
 import com.relino.core.support.Utils;
 import com.relino.core.support.thread.NamedThreadFactory;
 import com.relino.core.support.thread.QueueSizeLimitExecutor;
@@ -31,9 +31,9 @@ public final class PullExecutableJobAndExecute {
 
     private int pullSize;
     private final ExecuteQueue executeQueue;
-    private final QueueSizeLimitExecutor<Job> executor;
+    private final QueueSizeLimitExecutor<BaseJob> executor;
 
-    public PullExecutableJobAndExecute(int pullSize, int watchPerSeconds, ExecuteQueue executeQueue, QueueSizeLimitExecutor<Job> executor) {
+    public PullExecutableJobAndExecute(int pullSize, int watchPerSeconds, ExecuteQueue executeQueue, QueueSizeLimitExecutor<BaseJob> executor) {
 
         Utils.check(pullSize, p -> p <= 0, "参数pullSize应该大于0, current = " + pullSize);
         Utils.check(watchPerSeconds, p -> p <= 0, "参数watchPerSeconds应该大于0, current = " + watchPerSeconds);
@@ -55,11 +55,11 @@ public final class PullExecutableJobAndExecute {
 
     protected void pullJob() throws Exception {
         long start = System.currentTimeMillis();
-        List<Job> jobs = executeQueue.getNextExecutableJob(pullSize);
+        List<BaseJob> jobs = executeQueue.getNextExecutableJob(pullSize);
         while (!Utils.isEmpty(jobs)) {
             int index = 0;
             while(index < jobs.size()) {
-                Job job = jobs.get(index);
+                BaseJob job = jobs.get(index);
                 if(executor.addItem(job, 50, TimeUnit.MICROSECONDS)) {
                     index++;
                 }
@@ -68,7 +68,7 @@ public final class PullExecutableJobAndExecute {
         }
         if(log.isDebugEnabled()) {
             log.debug("pull job ids = [{}], time = {}",
-                    jobs.stream().map(Job::getJobId).collect(Collectors.joining(",")),
+                    jobs.stream().map(BaseJob::getJobId).collect(Collectors.joining(",")),
                     System.currentTimeMillis() - start);
         }
     }

@@ -7,7 +7,6 @@ import com.relino.core.helper.LogAction;
 import com.relino.core.helper.TestHelper;
 import com.relino.core.model.retry.IRetryPolicyManager;
 import com.relino.core.support.id.IdGenerator;
-import com.relino.core.support.id.UUIDIdGenerator;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -34,7 +33,7 @@ public class JobTest {
         Oper oper = Oper.builder(TestHelper.LOG_ACTION_ID).maxExecuteCount(10).retryPolicy(IRetryPolicyManager.IMMEDIATELY_RETRY_POLICY).build();
         JobAttr commonAttr = new JobAttr();
         commonAttr.setString(LogAction.logValue, "hello-" + System.currentTimeMillis());
-        Job job = new JobBuilder(idGenerator.getNext(), oper).delayJob(100).commonAttr(commonAttr).build();
+        BaseJob job = new JobBuilder(idGenerator.getNext(), oper).delayJob(100).commonAttr(commonAttr).build();
         log.info("end ...... ");
     }
 
@@ -48,7 +47,7 @@ public class JobTest {
         JobAttr commonAttr = new JobAttr();
         commonAttr.setString(LogAction.logValue, "hello-" + System.currentTimeMillis());
 
-        Job job = jobProducer.builder(oper)
+        BaseJob job = jobProducer.builder(oper)
                 .delayJob(100)
                 .commonAttr(commonAttr)
                 .build();

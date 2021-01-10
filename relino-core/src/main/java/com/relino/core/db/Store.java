@@ -1,6 +1,6 @@
 package com.relino.core.db;
 
-import com.relino.core.model.Job;
+import com.relino.core.model.BaseJob;
 import com.relino.core.model.db.ExecuteTimeEntity;
 import com.relino.core.model.db.JobEntity;
 import com.relino.core.model.JobStatus;
@@ -50,7 +50,7 @@ public abstract class Store {
     /**
      * 插入一条新job，返回受影响的行数
      */
-    abstract public int insertJob(Job job) throws SQLException;
+    abstract public int insertJob(BaseJob job) throws SQLException;
 
     /**
      * 根据jobId查询
@@ -64,7 +64,7 @@ public abstract class Store {
      *
      * @param updateCommonAttr 是否更新commonAttr
      */
-    abstract public int updateJob(Job job, boolean updateCommonAttr) throws SQLException;
+    abstract public int updateJob(BaseJob job, boolean updateCommonAttr) throws SQLException;
 
     /**
      * select for update
@@ -79,7 +79,7 @@ public abstract class Store {
     abstract public List<JobEntity> selectJobEntity(long lastExecuteJobId, int limit) throws SQLException;
 
     /**
-     * 返回willExecuteTime在[start, end] 且 jobStatus为{@link JobStatus#DELAY} 的limit个job
+     * 返回willExecuteTime在[start, end] 且 jobStatus为{@link JobStatus#SLEEP} 的limit个job
      *
      * @return not null, 如果无数据返回空list
      */

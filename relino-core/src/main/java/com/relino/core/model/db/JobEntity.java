@@ -38,7 +38,7 @@ public class JobEntity {
     /**
      * 将JobEntity转换为Job对象
      */
-    public static Job toJob(JobEntity entity) {
+    public static BaseJob toJob(JobEntity entity) {
         if(entity == null) {
             return null;
         }
@@ -51,7 +51,7 @@ public class JobEntity {
                 entity.getMRetryPolicyId()
         );
 
-        return new Job(
+        return new BaseJob(
                 entity.getId(),
                 entity.getJobId(),
                 entity.getIdempotentId(),

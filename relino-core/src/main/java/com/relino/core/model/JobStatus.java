@@ -9,9 +9,11 @@ import java.util.Map;
  */
 public enum JobStatus {
 
-    DELAY(1, "延迟执行"),
+    PREPARE(0, "准备"),
+    SLEEP(1, "等待"),
     RUNNABLE(2, "可执行"),
-    FINISHED(3, "已完成");
+    FINISHED(3, "已完成"),
+    CANCEL(4, "取消");
 
     private int code;
     private String desc;

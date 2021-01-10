@@ -1,7 +1,7 @@
 package com.relino.core;
 
 import com.relino.core.db.Store;
-import com.relino.core.model.Job;
+import com.relino.core.model.BaseJob;
 import com.relino.core.model.executequeue.ExecuteQueue;
 import com.relino.core.model.executequeue.PessimisticLockExecuteQueue;
 import com.relino.core.register.CuratorLeaderElection;
@@ -32,7 +32,7 @@ public class Relino {
 
     public final Store store;
     public final IdGenerator idGenerator;
-    public final QueueSizeLimitExecutor<Job> jotExecutor;
+    public final QueueSizeLimitExecutor<BaseJob> jotExecutor;
     public final ExecuteQueue executeQueue;
     public final JobProducer jobProducer;
     public final JobProcessor jobProcessor;

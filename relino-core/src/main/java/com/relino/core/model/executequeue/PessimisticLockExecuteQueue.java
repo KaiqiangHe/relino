@@ -1,7 +1,7 @@
 package com.relino.core.model.executequeue;
 
 import com.relino.core.db.Store;
-import com.relino.core.model.Job;
+import com.relino.core.model.BaseJob;
 import com.relino.core.model.db.JobEntity;
 import com.relino.core.support.Utils;
 
@@ -32,7 +32,7 @@ public class PessimisticLockExecuteQueue implements ExecuteQueue {
      * @return not null, maybe empty
      */
     @Override
-    public synchronized List<Job> getNextExecutableJob(int batchSize) throws Exception {
+    public synchronized List<BaseJob> getNextExecutableJob(int batchSize) throws Exception {
 
         if(batchSize < 1) {
             throw new IllegalArgumentException("参数batchSize比速大于0, 当前值为" + batchSize);

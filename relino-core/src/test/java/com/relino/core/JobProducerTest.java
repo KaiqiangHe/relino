@@ -3,7 +3,7 @@ package com.relino.core;
 import com.relino.core.db.DBBasedStore;
 import com.relino.core.db.Store;
 import com.relino.core.helper.TestHelper;
-import com.relino.core.model.Job;
+import com.relino.core.model.BaseJob;
 import com.relino.core.model.JobAttr;
 import com.relino.core.model.Oper;
 import com.relino.core.model.OperStatus;
@@ -37,7 +37,7 @@ public class JobProducerTest {
         JobAttr commonAttr = new JobAttr();
         commonAttr.setString("hello", "world" + System.currentTimeMillis());
 
-        Job job = jobProducer.builder(oper).commonAttr(commonAttr).delayJob(100).build();
+        BaseJob job = jobProducer.builder(oper).commonAttr(commonAttr).delayJob(100).build();
         jobProducer.createJob(job);
     }
 }

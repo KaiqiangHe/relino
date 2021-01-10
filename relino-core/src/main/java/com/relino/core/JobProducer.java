@@ -3,7 +3,7 @@ package com.relino.core;
 import com.relino.core.db.Store;
 import com.relino.core.exception.JobCreateException;
 import com.relino.core.exception.JobDuplicateException;
-import com.relino.core.model.Job;
+import com.relino.core.model.BaseJob;
 import com.relino.core.model.JobAttr;
 import com.relino.core.model.Oper;
 import com.relino.core.support.id.IdGenerator;
@@ -29,7 +29,7 @@ public class JobProducer {
      * @throws JobCreateException
      * @throws JobDuplicateException
      */
-    public void createJob(Job job) throws JobCreateException, JobDuplicateException {
+    public void createJob(BaseJob job) throws JobCreateException, JobDuplicateException {
         try {
             store.insertJob(job);
         } catch (Exception e) {
@@ -52,7 +52,7 @@ public class JobProducer {
         private final Oper mOper;
         private String idempotentId;
 
-        private String jobCode = Job.DEFAULT_JOB_CODE;
+        private String jobCode = BaseJob.DEFAULT_JOB_CODE;
         private boolean delayJob = false;
         private LocalDateTime beginTime = LocalDateTime.now();
         private JobAttr commonAttr = new JobAttr();
@@ -84,8 +84,8 @@ public class JobProducer {
             return this;
         }
 
-        public Job build() {
-            return new Job(this);
+        public BaseJob build() {
+            return new BaseJob(this);
         }
 
         public String getJobId() {

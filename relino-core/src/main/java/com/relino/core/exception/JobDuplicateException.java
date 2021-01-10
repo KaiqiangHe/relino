@@ -1,6 +1,6 @@
 package com.relino.core.exception;
 
-import com.relino.core.model.Job;
+import com.relino.core.model.BaseJob;
 
 /**
  * // TODO: 2020/11/21
@@ -9,15 +9,15 @@ import com.relino.core.model.Job;
  */
 public class JobDuplicateException extends JobCreateException {
 
-    public JobDuplicateException(Job job) {
+    public JobDuplicateException(BaseJob job) {
         super(job);
     }
 
-    public JobDuplicateException(String message, Job job) {
+    public JobDuplicateException(String message, BaseJob job) {
         super(message, job);
     }
 
-    public JobDuplicateException(String message, Throwable cause, Job job) {
+    public JobDuplicateException(String message, Throwable cause, BaseJob job) {
         super(message, cause, job);
     }
 }

@@ -2,7 +2,6 @@ package com.relino.core.task;
 
 import com.relino.core.db.Store;
 import com.relino.core.exception.HandleException;
-import com.relino.core.model.Job;
 import com.relino.core.model.JobStatus;
 import com.relino.core.model.db.ExecuteTimeEntity;
 import com.relino.core.register.ElectionCandidate;

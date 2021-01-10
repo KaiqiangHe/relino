@@ -1,7 +1,7 @@
 package com.relino.core.db;
 
 import com.relino.core.exception.RelinoException;
-import com.relino.core.model.Job;
+import com.relino.core.model.BaseJob;
 import com.relino.core.model.db.ExecuteTimeEntity;
 import com.relino.core.model.db.JobEntity;
 import com.relino.core.model.JobStatus;
@@ -100,7 +100,7 @@ public class DBBasedStore extends Store {
                     "    m_action_id, m_oper_status, m_execute_count, m_retry_policy_Id, m_max_retry)" +
                     "value (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     @Override
-    public int insertJob(Job job) throws SQLException {
+    public int insertJob(BaseJob job) throws SQLException {
         Oper mOper = job.getMOper();
         Object[] params = new Object[] {
                 job.getJobId(), job.getIdempotentId(), job.getJobCode(), job.getJobStatus().getCode(), job.isDelayJob(), job.getBeginTime(),
@@ -135,7 +135,7 @@ public class DBBasedStore extends Store {
                     "    m_oper_status = ?, m_execute_count = ? " +
                     "where job_id = ?";
     @Override
-    public int updateJob(Job job, boolean updateCommonAttr) throws SQLException {
+    public int updateJob(BaseJob job, boolean updateCommonAttr) throws SQLException {
         List<Object> param = new ArrayList<>();
         String sql;
         if(updateCommonAttr) {
@@ -177,7 +177,7 @@ public class DBBasedStore extends Store {
     @Override
     public List<JobEntity> selectJobEntity(long lastExecuteJobId, int limit) throws SQLException {
 
-        String sql = "select * from job where job_status = 2 and execute_order > ? order by execute_order limit ?";
+        String sql = "select * from job where job_status = " + JobStatus.RUNNABLE + " and execute_order > ? order by execute_order limit ?";
         List<Map<String, Object>> rows = query(sql, new MapListHandler(), new Object[]{lastExecuteJobId, limit});
         if(Utils.isEmpty(rows)) {
             return Collections.emptyList();
@@ -220,7 +220,7 @@ public class DBBasedStore extends Store {
 
     @Override
     public List<Long> getRunnableDelayJobId(LocalDateTime start, LocalDateTime end, int limit) throws SQLException {
-        String sql = "select id from job where job_status = 1 and will_execute_time >= ? and will_execute_time <= ? order by will_execute_time limit ?";
+        String sql = "select id from job where job_status = " + JobStatus.SLEEP +" and will_execute_time >= ? and will_execute_time <= ? order by will_execute_time limit ?";
         Object[] params = new Object[]{Utils.toStrDate(start), Utils.toStrDate(end), limit};
         List<BigInteger> ids = query(sql, new ColumnListHandler<>("id"), params);
         if(Utils.isEmpty(ids)) {
@@ -286,7 +286,7 @@ public class DBBasedStore extends Store {
 
     @Override
     public List<Long> getDeadJobs(long startExecuteOrder, long endExecuteOrder) throws SQLException {
-        String sql = "select id from job where job_status = 2 and execute_order > ? and execute_order <= ?";
+        String sql = "select id from job where job_status = " + JobStatus.RUNNABLE + " and execute_order > ? and execute_order <= ?";
         List<BigInteger> ids = query(sql, new ColumnListHandler<>("id"), new Object[]{startExecuteOrder, endExecuteOrder});
         if(Utils.isEmpty(ids)) {
             return Collections.emptyList();
@@ -302,7 +302,7 @@ public class DBBasedStore extends Store {
         }
 
         int idSize = ids.size();
-        String sql = "update job set job_status = 1, will_execute_time = ? where id in " + getNQuestionMark(idSize);
+        String sql = "update job set job_status = " + JobStatus.SLEEP + ", will_execute_time = ? where id in " + getNQuestionMark(idSize);
         Object[] param = new Object[idSize + 1];
         param[0] = Utils.toStrDate(willExecuteTime);
         for (int i = 0; i < idSize; i++) {

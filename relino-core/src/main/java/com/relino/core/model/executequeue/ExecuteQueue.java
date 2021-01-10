@@ -1,6 +1,6 @@
 package com.relino.core.model.executequeue;
 
-import com.relino.core.model.Job;
+import com.relino.core.model.BaseJob;
 
 import java.util.List;
 
@@ -17,5 +17,5 @@ public interface ExecuteQueue {
      * @param batchSize > 0
      * @return not null, may be empty
      */
-    List<Job> getNextExecutableJob(int batchSize) throws Exception;
+    List<BaseJob> getNextExecutableJob(int batchSize) throws Exception;
 }

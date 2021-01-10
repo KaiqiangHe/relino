@@ -3,7 +3,7 @@ package com.relino.core.task;
 import com.relino.core.JobProducer;
 import com.relino.core.db.Store;
 import com.relino.core.helper.TestHelper;
-import com.relino.core.model.Job;
+import com.relino.core.model.BaseJob;
 import com.relino.core.model.Oper;
 import com.relino.core.model.retry.IRetryPolicyManager;
 import com.relino.core.support.id.IdGenerator;
@@ -31,7 +31,7 @@ public class ScanRunnableDelayJobTest {
                     .retryPolicy(IRetryPolicyManager.IMMEDIATELY_RETRY_POLICY)
                     .maxExecuteCount(10)
                     .build();
-            Job job = jobProducer.builder(mOper).delayJob(10 + ThreadLocalRandom.current().nextInt(1000)).build();
+            BaseJob job = jobProducer.builder(mOper).delayJob(10 + ThreadLocalRandom.current().nextInt(1000)).build();
             jobProducer.createJob(job);
         }
     }

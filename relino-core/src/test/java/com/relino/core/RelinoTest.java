@@ -2,7 +2,7 @@ package com.relino.core;
 
 import com.relino.core.db.Store;
 import com.relino.core.helper.TestHelper;
-import com.relino.core.model.Job;
+import com.relino.core.model.BaseJob;
 import com.relino.core.model.JobAttr;
 import com.relino.core.model.Oper;
 import com.relino.core.task.DeadJobWatchDog;
@@ -41,7 +41,7 @@ public class RelinoTest {
                     Oper mOper = Oper.builder(TestHelper.SleepAndLogAction_ID).maxExecuteCount(5).build();
                     JobAttr initAttr = new JobAttr();
                     initAttr.setLong("sleepTime", 10);
-                    Job job = jobProducer.builder(mOper).commonAttr(initAttr).delayJob(10 + ThreadLocalRandom.current().nextInt(100)).build();
+                    BaseJob job = jobProducer.builder(mOper).commonAttr(initAttr).delayJob(10 + ThreadLocalRandom.current().nextInt(100)).build();
                     jobProducer.createJob(job);
                     try {
                         Thread.sleep(100);

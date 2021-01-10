@@ -2,7 +2,7 @@ package com.relino.core;
 
 import com.relino.core.db.Store;
 import com.relino.core.exception.HandleException;
-import com.relino.core.model.Job;
+import com.relino.core.model.BaseJob;
 import com.relino.core.model.JobAttr;
 import com.relino.core.model.Oper;
 import com.relino.core.support.Utils;
@@ -13,7 +13,7 @@ import java.time.LocalDateTime;
 /**
  * @author kaiqiang.he
  */
-public class JobProcessor implements Processor<Job> {
+public class JobProcessor implements Processor<BaseJob> {
 
     private Store store;
 
@@ -22,7 +22,7 @@ public class JobProcessor implements Processor<Job> {
     }
 
     @Override
-    public void process(Job job) {
+    public void process(BaseJob job) {
 
         Utils.checkNoNull(job);
 
@@ -39,21 +39,22 @@ public class JobProcessor implements Processor<Job> {
                 commonAttr.addAll(resultValue);
             }
 
+            boolean retryNow = false;
             if(mOper.isExecuteFinished()) {
-                job.setExecuteFinish();
+                job.finished();
             } else {
                 // 执行未完成、重试
                 LocalDateTime retryExecuteTime = mOper.getRetryExecuteTime();
                 if(retryExecuteTime == null) {
-                    job.setImmediatelyRetryExecute();
+                    retryNow = true;    // 立即重试
                 } else {
-                    job.setDelayExecute(retryExecuteTime);
+                    job.delayExecute(retryExecuteTime);
                 }
             }
 
             store.updateJob(job, updateCommonAttr);
 
-            if(job.isRetryNow()) {
+            if(retryNow) {
                 process(job);
             }
 

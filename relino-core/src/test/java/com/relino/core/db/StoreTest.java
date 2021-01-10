@@ -32,17 +32,17 @@ public class StoreTest {
 
     @Test
     public void testInsertAndQuery() throws SQLException {
-        Job job = createTestJob();
+        BaseJob job = createTestJob();
         store.insertJob(job);
 
         JobEntity entity = store.queryByJobId(job.getJobId());
-        Job newJob = JobEntity.toJob(entity);
+        BaseJob newJob = JobEntity.toJob(entity);
         Assert.assertNotNull(entity);
     }
 
     @Test
     public void testUpdateJob() throws SQLException {
-        Job job = createTestJob();
+        BaseJob job = createTestJob();
         store.insertJob(job);
 
         job.setJobStatus(JobStatus.FINISHED);
@@ -62,16 +62,16 @@ public class StoreTest {
         store.updateJob(job, true);
     }
 
-    private Job createTestJob() {
+    private BaseJob createTestJob() {
         Oper oper = new Oper("test-action-id", OperStatus.RUNNABLE,
                 1, 3, "test-retry-policy-id");
 
         String id = idGenerator.getNext();
-        Job job = new Job(null, id, id, "test-job-code", true, LocalDateTime.now(),
+        BaseJob job = new BaseJob(null, id, id, "test-job-code", true, LocalDateTime.now(),
                 JobStatus.RUNNABLE, -1, LocalDateTime.now(),
                 new JobAttr(), oper);
         job.setExecuteOrder(-1);
-        job.setJobStatus(JobStatus.DELAY);
+        job.setJobStatus(JobStatus.SLEEP);
         job.setWillExecuteTime(LocalDateTime.now());
 
         return job;
@@ -81,8 +81,8 @@ public class StoreTest {
     // tx test
     @Test
     public void testTxRollback() throws SQLException {
-        Job job1 = createTestJob();
-        Job job2 = createTestJob();
+        BaseJob job1 = createTestJob();
+        BaseJob job2 = createTestJob();
 
         mockTx(job1, job2, true);
 
@@ -92,8 +92,8 @@ public class StoreTest {
 
     @Test
     public void testTxCommit() throws SQLException {
-        Job job1 = createTestJob();
-        Job job2 = createTestJob();
+        BaseJob job1 = createTestJob();
+        BaseJob job2 = createTestJob();
 
         mockTx(job1, job2, false);
 
@@ -103,8 +103,8 @@ public class StoreTest {
 
     @Test
     public void testNotUseTx() throws SQLException {
-        Job job1 = createTestJob();
-        Job job2 = createTestJob();
+        BaseJob job1 = createTestJob();
+        BaseJob job2 = createTestJob();
 
         try {
             store.insertJob(job1);
@@ -120,7 +120,7 @@ public class StoreTest {
         Assert.assertNull(store.queryByJobId(job2.getJobId()));
     }
 
-    private void mockTx(Job job1, Job job2, boolean exception) throws SQLException {
+    private void mockTx(BaseJob job1, BaseJob job2, boolean exception) throws SQLException {
         store.beginTx();
         try {
             store.insertJob(job1);
@@ -137,8 +137,8 @@ public class StoreTest {
 
     @Test
     public void testExecuteWithTxCommit() throws SQLException {
-        Job job1 = createTestJob();
-        Job job2 = createTestJob();
+        BaseJob job1 = createTestJob();
+        BaseJob job2 = createTestJob();
 
         mocExecuteWithTx(job1, job2, false);
 
@@ -148,8 +148,8 @@ public class StoreTest {
 
     @Test
     public void testExecuteWithTxRollback() throws SQLException {
-        Job job1 = createTestJob();
-        Job job2 = createTestJob();
+        BaseJob job1 = createTestJob();
+        BaseJob job2 = createTestJob();
 
         mocExecuteWithTx(job1, job2, true);
 
@@ -157,7 +157,7 @@ public class StoreTest {
         Assert.assertNull(store.queryByJobId(job2.getJobId()));
     }
 
-    private void mocExecuteWithTx(Job job1, Job job2, boolean exception) {
+    private void mocExecuteWithTx(BaseJob job1, BaseJob job2, boolean exception) {
         try {
             store.executeWithTx(jobs -> {
                 store.insertJob(jobs.get(0));
@@ -178,8 +178,8 @@ public class StoreTest {
 
     @Test
     public void testSetDelayJobRunnable() throws SQLException {
-        Job job1 = createTestJob();
-        Job job2 = createTestJob();
+        BaseJob job1 = createTestJob();
+        BaseJob job2 = createTestJob();
         long job1ExecuteOrder = System.currentTimeMillis();
         long job2ExecuteOrder = System.currentTimeMillis() + 1;
         store.insertJob(job1);
@@ -205,19 +205,19 @@ public class StoreTest {
         LocalDateTime nowPlus2H = now.plusHours(2);
         LocalDateTime nowPlus3H = now.plusHours(3);
 
-        Job job1 = createTestJob();
-        Job job2 = createTestJob();
-        Job job3 = createTestJob();
-        Job job4 = createTestJob();
+        BaseJob job1 = createTestJob();
+        BaseJob job2 = createTestJob();
+        BaseJob job3 = createTestJob();
+        BaseJob job4 = createTestJob();
 
         job1.setWillExecuteTime(now);
-        job1.setJobStatus(JobStatus.DELAY);
+        job1.setJobStatus(JobStatus.SLEEP);
         job2.setWillExecuteTime(nowPlus1H);
-        job2.setJobStatus(JobStatus.DELAY);
+        job2.setJobStatus(JobStatus.SLEEP);
         job3.setWillExecuteTime(nowPlus2H);
-        job3.setJobStatus(JobStatus.DELAY);
+        job3.setJobStatus(JobStatus.SLEEP);
         job4.setWillExecuteTime(nowPlus3H);
-        job4.setJobStatus(JobStatus.DELAY);
+        job4.setJobStatus(JobStatus.SLEEP);
 
         store.insertJob(job3);
         store.insertJob(job4);

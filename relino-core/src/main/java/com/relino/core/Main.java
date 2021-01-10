@@ -60,7 +60,7 @@ public class Main {
                 JobAttr initAttr = new JobAttr();
                 initAttr.setString("userId", "orange" + System.currentTimeMillis());
                 initAttr.setString("sendData", "Hello, Test Relino.");
-                Job job = relino.jobProducer.builder(mOper).commonAttr(initAttr).delayJob(10 + ThreadLocalRandom.current().nextInt(100)).build();
+                BaseJob job = relino.jobProducer.builder(mOper).commonAttr(initAttr).delayJob(10 + ThreadLocalRandom.current().nextInt(100)).build();
                 relino.jobProducer.createJob(job);
                 log.info("crate job success, jobId = {}", job.getJobId());
                 Thread.sleep(500);

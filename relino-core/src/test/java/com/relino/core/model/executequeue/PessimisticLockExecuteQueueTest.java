@@ -2,7 +2,7 @@ package com.relino.core.model.executequeue;
 
 import com.relino.core.helper.TestHelper;
 import com.relino.core.db.Store;
-import com.relino.core.model.Job;
+import com.relino.core.model.BaseJob;
 import com.relino.core.model.JobStatus;
 import com.relino.core.support.id.IdGenerator;
 import com.relino.core.support.id.UUIDIdGenerator;
@@ -32,7 +32,7 @@ public class PessimisticLockExecuteQueueTest {
         // 创建测试数据
         log.info("create mock data begin ... ");
         for (int i = 0; i < 1000; i++) {
-            Job job = TestHelper.getJob(idGenerator, TestHelper.LOG_ACTION_ID);
+            BaseJob job = TestHelper.getJob(idGenerator, TestHelper.LOG_ACTION_ID);
             job.setJobStatus(JobStatus.RUNNABLE);
             store.insertJob(job);
         }
@@ -43,7 +43,7 @@ public class PessimisticLockExecuteQueueTest {
     public void launch() throws Exception {
 
         while(true) {
-            List<Job> nextExecutableJob = executeQueue.getNextExecutableJob(20);
+            List<BaseJob> nextExecutableJob = executeQueue.getNextExecutableJob(20);
             if(nextExecutableJob.isEmpty()) {
                 break;
             }
