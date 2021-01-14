@@ -2,6 +2,48 @@
 
 **reliable-notice** 基于mysql的轻量级无中心化可靠执行 & 延时(定时)执行
 
+## 快速开始
+### 1. 添加依赖
+```
+<dependency>
+    <groupId>org.github.relino</groupId>
+    <artifactId>relino-core</artifactId>
+    <version>1.0</version>
+</dependency>
+```
+### 2. 使用
+
+实现Action接口
+```java
+public class EatApple implements Action {
+
+    @Override
+    public ActionResult execute(String jobId, JobAttr commonAttr, int executeCount) {
+
+        System.out.println("EatApple execute. jobId = " + jobId + ", executeCount = " + executeCount);
+        return ActionResult.buildSuccess();
+
+    }
+}
+```
+
+注册
+```java
+ActionManager.register("eatApple", new EatApple());
+```
+
+创建Job
+```java
+
+public void createJob() {
+
+    
+
+
+
+}
+```
+
 ## RoadMap
 
 ## TODO

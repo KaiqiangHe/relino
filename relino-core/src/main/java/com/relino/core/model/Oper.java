@@ -14,7 +14,7 @@ public class Oper {
     /**
      * 默认最大重试次数
      */
-    private static final int DEFAULT_MAX_RETRY_COUNT = 3;
+    public static final int DEFAULT_MAX_RETRY_COUNT = 3;
 
     /**
      * actionId

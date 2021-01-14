@@ -36,48 +36,7 @@ public class DBBasedStore extends Store {
         runner = new QueryRunner(dataSource);
     }
 
-    @Override
-    public void beginTx() throws SQLException {
-        Connection conn = connThreadLocal.get();
-        if(conn != null) {
-            throw new RelinoException("不能重复调用beginTx(), 应先调用commitTx()或rollbackTx()关闭当前Connection");
-        }
 
-        try {
-            conn = dataSource.getConnection();
-            conn.setAutoCommit(false);
-            connThreadLocal.set(conn);
-        } catch (Exception e) {
-            closeAndRemoveConnection();
-            throw e;
-        }
-    }
-
-    @Override
-    public void commitTx() throws SQLException {
-        Connection conn = connThreadLocal.get();
-        if(conn == null) {
-            throw new RelinoException("当前线程无Connection对象, 应先调用beginTx()开启事务");
-        }
-        try {
-            conn.commit();
-        } finally {
-            closeAndRemoveConnection();
-        }
-    }
-
-    @Override
-    public void rollbackTx() throws SQLException {
-        Connection conn = connThreadLocal.get();
-        if(conn == null) {
-            throw new RelinoException("当前线程无Connection对象, 应先调用beginTx()开启事务");
-        }
-        try {
-            conn.rollback();
-        } finally {
-            closeAndRemoveConnection();
-        }
-    }
 
     /**
      * 关闭并移除Connection对象

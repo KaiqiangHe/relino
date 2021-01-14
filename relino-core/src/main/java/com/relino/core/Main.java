@@ -13,6 +13,9 @@ import java.time.LocalDateTime;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
+ *
+ *
+ *
  * RoadMap:
  * 1. 考虑系统整体设计，细化Job模型职责，完善job execute方法，完善用户使用API，可以用UML类图的形式描述
  * 2. 重新设计Store层，以事务、悲观锁、业务相关sql等分开。不应在该层直接映射到sql，应该做业务层的抽象

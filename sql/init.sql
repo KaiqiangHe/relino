@@ -49,10 +49,12 @@ CREATE TABLE kv
 ) ENGINE = INNODB
   DEFAULT CHARSET = utf8mb4;
 
+/* todo 简化k长度 */
 insert into kv(k, v) value ('execute_queue_cursor', '-1');
 insert into kv(k, v) value ('execute_order', '1');
 insert into kv(k, v) value ('dead_job_watch_dog', '-1');
 
+/* todo 类似于日志表 */
 drop table if exists execute_time;
 CREATE TABLE execute_time
 (
