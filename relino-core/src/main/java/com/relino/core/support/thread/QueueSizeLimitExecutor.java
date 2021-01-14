@@ -1,5 +1,6 @@
 package com.relino.core.support.thread;
 
+import com.relino.core.exception.HandleException;
 import com.relino.core.support.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -14,7 +15,7 @@ import java.util.concurrent.TimeUnit;
  *
  * @author kaiqiang.he
  */
-public class QueueSizeLimitExecutor<T extends Processor> implements Runnable {
+public class QueueSizeLimitExecutor<T> implements Runnable {
     
     private static final Logger log = LoggerFactory.getLogger(QueueSizeLimitExecutor.class);
     
@@ -26,25 +27,28 @@ public class QueueSizeLimitExecutor<T extends Processor> implements Runnable {
     private final int queueSize;
 
     private BlockingQueue<T> queue;
+    private Processor<T> processor;
     private ThreadPoolExecutor workers;
 
-    public QueueSizeLimitExecutor(String name, int coreThread, int maxThread, int queueSize) {
+    public QueueSizeLimitExecutor(String name, int coreThread, int maxThread, int queueSize, Processor<T> processor) {
 
         Utils.check(name, Utils::isEmpty, "name不能为空");
         Utils.check(coreThread, v -> v <= 0, "coreThread应大于0, [" + coreThread + "]");
         Utils.check(maxThread, v -> v <= 0 || maxThread < coreThread, "coreThread应大于0且大于等于maxThread, [" + coreThread + "," + maxThread + "]");
         Utils.check(queueSize, v -> v <= 0, "queueSize必须大于0");
+        Utils.checkNoNull(processor);
 
         this.name = name;
         this.coreThread = coreThread;
         this.maxThread = maxThread;
         this.queueSize = queueSize;
+        this.processor = processor;
 
         init();
     }
 
-    public QueueSizeLimitExecutor(String name, int coreThread, int maxThread) {
-        this(name, coreThread, maxThread, DEFAULT_QUEUE_SIZE);
+    public QueueSizeLimitExecutor(String name, int coreThread, int maxThread, Processor<T> processor) {
+        this(name, coreThread, maxThread, DEFAULT_QUEUE_SIZE, processor);
     }
 
     private void init() {
@@ -86,10 +90,10 @@ public class QueueSizeLimitExecutor<T extends Processor> implements Runnable {
                     return ;
                 }
 
-                elem.process();
+                processor.process(elem);
             }
-        } catch (Exception e) {
-            log.error("execute error ", e);
+        } catch (Throwable t) {
+            HandleException.handleUnExpectedException(t);
         }
     }
 }

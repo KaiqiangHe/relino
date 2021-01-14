@@ -1,15 +1,10 @@
 package com.relino.core;
 
-import com.relino.core.db.Store;
 import com.relino.core.helper.TestHelper;
 import com.relino.core.model.Job;
 import com.relino.core.model.JobAttr;
 import com.relino.core.model.Oper;
-import com.relino.core.model.executequeue.ExecuteQueue;
-import com.relino.core.model.executequeue.PessimisticLockExecuteQueue;
-import com.relino.core.support.id.IdGenerator;
-import com.relino.core.support.id.UUIDIdGenerator;
-import com.relino.core.support.thread.QueueSizeLimitExecutor;
+import com.relino.core.support.db.DBExecutor;
 import com.relino.core.task.DeadJobWatchDog;
 import org.junit.Before;
 import org.junit.Test;
@@ -30,10 +25,9 @@ public class RelinoTest {
     @Before
     public void setUp() {
         TestHelper.testBootStrap();
-        Store store = TestHelper.getStore();
-        Job.setStore(store);
+        DBExecutor dbExecutor = TestHelper.getDBExecutor();
 
-        app = new Relino(store, 100, 100, 5);
+        app = new Relino(TestHelper.getDataSource(), 100, 100, 5);
     }
 
     @Test
@@ -66,7 +60,7 @@ public class RelinoTest {
 
     @Test
     public void testDeadJobWatchDog() {
-        DeadJobWatchDog watchDog = new DeadJobWatchDog(app.store, 1);
+        DeadJobWatchDog watchDog = new DeadJobWatchDog(app.dbExecutor, 1);
         watchDog.execute();
     }
 }

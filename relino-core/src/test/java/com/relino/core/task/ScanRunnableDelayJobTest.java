@@ -1,11 +1,12 @@
 package com.relino.core.task;
 
 import com.relino.core.JobProducer;
-import com.relino.core.db.Store;
 import com.relino.core.helper.TestHelper;
 import com.relino.core.model.Job;
 import com.relino.core.model.Oper;
 import com.relino.core.model.retry.IRetryPolicyManager;
+import com.relino.core.support.db.DBExecutor;
+import com.relino.core.support.db.JobStore;
 import com.relino.core.support.id.IdGenerator;
 import org.junit.Before;
 import org.junit.Test;
@@ -20,10 +21,10 @@ public class ScanRunnableDelayJobTest {
     @Before
     public void setUp() throws Exception {
         TestHelper.testBootStrap();
-        Store store = TestHelper.getStore();
+        DBExecutor dbExecutor = TestHelper.getDBExecutor();
         IdGenerator idGenerator = TestHelper.getIdGenerator();
-        jobProducer = new JobProducer(store, idGenerator);
-        scanRunnableDelayJob = new ScanRunnableDelayJob(store, 10);
+        jobProducer = new JobProducer(new JobStore(dbExecutor), idGenerator);
+        scanRunnableDelayJob = new ScanRunnableDelayJob(dbExecutor, 10);
 
         // 创建测试数据
         for (int i = 0; i < 5000; i++) {
