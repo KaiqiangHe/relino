@@ -1,5 +1,6 @@
 package com.relino.core;
 
+import com.relino.core.config.RelinoConfig;
 import com.relino.core.helper.TestHelper;
 import com.relino.core.model.Job;
 import com.relino.core.model.JobAttr;
@@ -27,7 +28,7 @@ public class RelinoTest {
         TestHelper.testBootStrap();
         DBExecutor dbExecutor = TestHelper.getDBExecutor();
 
-        app = new Relino(TestHelper.getDataSource(), 100, 100, 5);
+        app = new Relino(new RelinoConfig("hhh", TestHelper.ZK_CONNECT_STR, TestHelper.getDataSource()));
     }
 
     @Test

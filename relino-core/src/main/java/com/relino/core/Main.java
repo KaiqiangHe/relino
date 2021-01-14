@@ -1,5 +1,6 @@
 package com.relino.core;
 
+import com.relino.core.config.RelinoConfig;
 import com.relino.core.model.*;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
@@ -36,6 +37,8 @@ public class Main {
 
     public static void main(String[] args) {
 
+        String ZK_CONNECT_STR = "127.0.0.1:2181";
+
         // create datasource
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl("jdbc:mysql://localhost:3306/relino?useSSL=false&useSSL=false&serverTimezone=Asia/Shanghai");
@@ -51,7 +54,9 @@ public class Main {
         String sendSmsActionId = "sendSms";
         ActionManager.register(sendSmsActionId, new SendSms());
 
-        Relino relino = new Relino(dataSource, 100, 100, 5);
+        RelinoConfig relinoConfig = new RelinoConfig("test-relino", ZK_CONNECT_STR, dataSource);
+        relinoConfig.setExecutorJobQueueSize(100);
+        Relino relino = new Relino(relinoConfig);
 
         while (true) {
             try {

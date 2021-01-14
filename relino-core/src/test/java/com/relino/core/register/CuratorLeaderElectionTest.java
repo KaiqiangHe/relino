@@ -1,5 +1,6 @@
 package com.relino.core.register;
 
+import com.relino.core.config.LeaderSelectorConfig;
 import com.relino.core.support.AbstractRunSupport;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
@@ -32,7 +33,7 @@ public class CuratorLeaderElectionTest {
             client.start();
             log.info("zk-{} connect success.", i);
             String name = "apple-" + i;
-            RelinoLeaderElectionListener appleListener = new RelinoLeaderElectionListener("apple", "/relino/apple", () -> new Apple(name));
+            RelinoLeaderElectionListener appleListener = new RelinoLeaderElectionListener(new LeaderSelectorConfig("apple", "/relino/apple", () -> new Apple(name)));
             CuratorLeaderElection leaderElection = new CuratorLeaderElection(Arrays.asList(appleListener), client);
             leaderElection.execute();
         }

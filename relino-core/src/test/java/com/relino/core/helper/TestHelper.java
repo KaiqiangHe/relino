@@ -21,6 +21,7 @@ public class TestHelper {
 
     public static final String LOG_ACTION_ID = "logAction";
     public static final String SleepAndLogAction_ID = "SleepAndLogAction";
+    public static final String ZK_CONNECT_STR = "127.0.0.1:2181";
 
     public static void testBootStrap() {
 
