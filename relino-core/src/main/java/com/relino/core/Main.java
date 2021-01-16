@@ -13,7 +13,6 @@ import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.time.LocalDateTime;
-import java.util.concurrent.ThreadLocalRandom;
 
 /**
  * RoadMap:
@@ -41,8 +40,6 @@ public class Main {
 
     public static void main(String[] args) {
 
-        String ZK_CONNECT_STR = "127.0.0.1:2181";
-
         // create datasource
         HikariConfig config = new HikariConfig();
         config.setJdbcUrl("jdbc:mysql://localhost:3306/relino?useSSL=false&useSSL=false&serverTimezone=Asia/Shanghai");
@@ -54,60 +51,53 @@ public class Main {
         config.setMaximumPoolSize(20);
         DataSource dataSource = new HikariDataSource(config);
 
-        RelinoConfig relinoConfig = new RelinoConfig("test-relino", ZK_CONNECT_STR, dataSource);
-        relinoConfig.setExecutorJobQueueSize(100);
+        String appId = "hello-relino";
+        String ZK_CONNECT_STR = "127.0.0.1:2181";
+        RelinoConfig relinoConfig = new RelinoConfig(appId, ZK_CONNECT_STR, dataSource);
 
-        // create action
-        String sendSmsActionId = "sendSms";
-        relinoConfig.registerAction(sendSmsActionId, new SendSms());
+        // 注册 Action
+        String sayHelloActionId = "sayHello";
+        relinoConfig.registerAction(sayHelloActionId, new SayHello());
 
         Relino relino = new Relino(relinoConfig);
 
         long timeMillis = System.currentTimeMillis();
         int n = 0;
-
         while (true) {
             try {
 
                 JobAttr initAttr = new JobAttr();
                 initAttr.setString("userId", "orange" + System.currentTimeMillis());
-                initAttr.setString("sendData", "Hello, Test Relino.");
 
-                Job job = relino.jobProducer.builder(sendSmsActionId)
-                        .jobCode("test")
-                        .idempotentId(timeMillis + "-" + (n++))
-                        .maxExecuteCount(5)
-                        .retryPolicy(IRetryPolicyManager.IMMEDIATELY_RETRY_POLICY)
-                        .delayExecute(LocalDateTime.now().plusSeconds(10))
-                        .commonAttr(initAttr)
+                Job job = relino.jobProducer.builder(sayHelloActionId)
+                        .idempotentId(timeMillis + "-" + (n++))                         // 幂等id
+                        .maxExecuteCount(5)                                             // 最大重试次数
+                        .retryPolicy(IRetryPolicyManager.IMMEDIATELY_RETRY_POLICY)      // 重试策略
+                        .delayExecute(LocalDateTime.now().plusSeconds(10))              // 指定时间执行
+                        .commonAttr(initAttr)                                           // 设置job属性
                         .build();
 
                 relino.jobProducer.createJob(job);
-                log.info("crate job success, jobId = {}", job.getJobId());
+
+                log.info("create job success, jobId = {}", job.getJobId());
                 Thread.sleep(50);
             } catch (Exception e) {
-                log.error("crate job error ", e);
+                log.error("create job error ", e);
             }
         }
     }
 
-    static class SendSms implements Action {
+    static class SayHello implements Action {
 
         @Override
         public ActionResult execute(String jobId, JobAttr commonAttr, int executeCount) {
 
             try {
                 String userId = commonAttr.getString("userId");
-                String sendData = commonAttr.getString("sendData");
-
-                // 模拟执行异常
-                if(ThreadLocalRandom.current().nextInt(100) == 0) {
-                    throw new RuntimeException("mock exception, jobId = " + jobId);
-                }
-
                 Thread.sleep(100);
-                log.info("sendSms success, userId = {}, sendData = {}", userId, sendData);
+                log.info("Hello {}", userId);
                 return ActionResult.buildSuccess();
+
             } catch (Exception e) {
                 log.error("sendSms error, jobId = {}", jobId, e);
                 JobAttr retAttr = new JobAttr();
@@ -117,5 +107,4 @@ public class Main {
             }
         }
     }
-
 }

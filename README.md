@@ -11,35 +11,59 @@
     <version>1.0</version>
 </dependency>
 ```
-### 2. 使用
-
-实现Action接口
+### 2. 实现Action接口，创建SayHello类
 ```java
-public class EatApple implements Action {
+static class SayHello implements Action {
 
-    @Override
-    public ActionResult execute(String jobId, JobAttr commonAttr, int executeCount) {
+        @Override
+        public ActionResult execute(String jobId, JobAttr commonAttr, int executeCount) {
 
-        System.out.println("EatApple execute. jobId = " + jobId + ", executeCount = " + executeCount);
-        return ActionResult.buildSuccess();
+            try {
+                String userId = commonAttr.getString("userId");
+                Thread.sleep(100);
+                log.info("Hello {}", userId);
+                return ActionResult.buildSuccess();
 
+            } catch (Exception e) {
+                log.error("sendSms error, jobId = {}", jobId, e);
+                JobAttr retAttr = new JobAttr();
+                retAttr.setLocalDateTime("errorTime" + executeCount, LocalDateTime.now());
+                retAttr.setString("errorException" + executeCount, e.getMessage());
+                return ActionResult.buildError(retAttr);
+            }
+        }
     }
-}
 ```
 
-注册
+###  3. 创建执行Job
 ```java
-ActionManager.register("eatApple", new EatApple());
-```
+static class Main {
 
-创建Job
-```java
-
-public void createJob() {
-
-    
-
-
+    public static void main(String[] args){
+      // 创建Relino对象
+      String appId = "hello-relino";
+      String ZK_CONNECT_STR = "127.0.0.1:2181";
+      RelinoConfig relinoConfig = new RelinoConfig(appId, ZK_CONNECT_STR, dataSource);
+      
+      String sayHelloActionId = "sayHello";
+      relinoConfig.registerAction(sayHelloActionId, new SayHello()); // 注册 Action
+      
+      Relino relino = new Relino(relinoConfig);
+      
+      // 创建Job属性
+      JobAttr initAttr = new JobAttr();
+      initAttr.setString("userId", "orange" + System.currentTimeMillis());
+      
+      // 创建Job
+      Job job = relino.jobProducer.builder(sayHelloActionId)
+                              .idempotentId("mock-idepotent-id")                              // 幂等id
+                              .maxExecuteCount(5)                                             // 最大重试次数
+                              .retryPolicy(IRetryPolicyManager.IMMEDIATELY_RETRY_POLICY)      // 重试策略
+                              .delayExecute(LocalDateTime.now().plusSeconds(10))              // 指定延迟执行时间
+                              .commonAttr(initAttr)                                           // 设置job属性
+                              .build();
+      relino.jobProducer.createJob(job);
+    }
 
 }
 ```
