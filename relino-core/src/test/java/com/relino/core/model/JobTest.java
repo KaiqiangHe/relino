@@ -1,13 +1,14 @@
 package com.relino.core.model;
 
+import com.relino.core.JobProcessor;
 import com.relino.core.JobProducer;
 import com.relino.core.JobProducer.JobBuilder;
-import com.relino.core.db.Store;
 import com.relino.core.helper.LogAction;
 import com.relino.core.helper.TestHelper;
 import com.relino.core.model.retry.IRetryPolicyManager;
+import com.relino.core.support.db.DBExecutor;
+import com.relino.core.support.db.JobStore;
 import com.relino.core.support.id.IdGenerator;
-import com.relino.core.support.id.UUIDIdGenerator;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -19,15 +20,17 @@ public class JobTest {
 
     private IdGenerator idGenerator;
     private JobProducer jobProducer;
-    private Store store;
+    private JobProcessor jobProcessor;
+    private JobStore jobStore;
 
     @Before
     public void init() {
         TestHelper.testBootStrap();
         idGenerator = TestHelper.getIdGenerator();
-        store = TestHelper.getStore();
-        jobProducer = new JobProducer(store, idGenerator);
-        Job.setStore(store);
+        DBExecutor dbExecutor = TestHelper.getDBExecutor();
+        jobStore = new JobStore(dbExecutor);
+        jobProducer = new JobProducer(jobStore, idGenerator);
+        jobProcessor = new JobProcessor(jobStore);
     }
 
     @Test
@@ -56,6 +59,6 @@ public class JobTest {
 
         jobProducer.createJob(job);
 
-        job.process();
+        jobProcessor.process(job);
     }
 }

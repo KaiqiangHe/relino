@@ -13,7 +13,7 @@ public class QueueSizeLimitExecutorTest {
     @Test
     public void test() throws InterruptedException {
 
-        QueueSizeLimitExecutor<Apple> executor = new QueueSizeLimitExecutor<>("apple", 1, 2, 10);
+        QueueSizeLimitExecutor<Apple> executor = new QueueSizeLimitExecutor<>("apple", 1, 4, 10, new AppleProcessor());
 
         int tCount = 3;
         CountDownLatch countDownLatch = new CountDownLatch(tCount);
@@ -38,10 +38,8 @@ public class QueueSizeLimitExecutorTest {
         log.info("end.....");
     }
 
-    private static class Apple implements Processor {
-
+    private static class Apple {
         private int delayMillSeconds;
-
         private String name;
 
         public Apple(int delayMillSeconds, String name) {
@@ -49,11 +47,22 @@ public class QueueSizeLimitExecutorTest {
             this.name = name;
         }
 
+        public int getDelayMillSeconds() {
+            return delayMillSeconds;
+        }
+
+        public String getName() {
+            return name;
+        }
+    }
+
+    private static class AppleProcessor implements Processor<Apple> {
+
         @Override
-        public void process() {
+        public void process(Apple apple) {
             try {
-                Thread.sleep(delayMillSeconds);
-                log.info("{} execute end.", name);
+                Thread.sleep(apple.getDelayMillSeconds());
+                log.info("{} execute end.", apple.getName());
             } catch (InterruptedException e) {
                 log.error("error ", e);
             }

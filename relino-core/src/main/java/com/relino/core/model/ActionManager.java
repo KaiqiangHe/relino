@@ -15,7 +15,7 @@ public class ActionManager {
 
     private static Map<String, Action> actionHolders = new HashMap<>();
 
-    private ActionManager() { }
+    public ActionManager() { }
 
     /**
      * 注册一个action

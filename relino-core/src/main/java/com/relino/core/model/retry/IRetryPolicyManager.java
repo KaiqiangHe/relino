@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Objects;
 
 /**
+ * // TODO: 2021/1/16  改为非静态方法
  *
  * @author kaiqiang.he
  */
@@ -19,15 +20,18 @@ public class IRetryPolicyManager {
 
     private IRetryPolicyManager() { }
 
-    public static final String DEFAULT_RETRY_POLICY = "_default";
-    public static final String IMMEDIATELY_RETRY_POLICY = "_immediate";
+    public static final String DEFAULT_RETRY_POLICY = "_df";
+    public static final String IMMEDIATELY_RETRY_POLICY = "_im";
     static {
-        register(DEFAULT_RETRY_POLICY, new DefaultIRetryPolicy());
         register(IMMEDIATELY_RETRY_POLICY, new ImmediatelyRetryPolicy());
     }
 
     public static IRetryPolicy getDefault() {
         return retryIdHolders.get(DEFAULT_RETRY_POLICY);
+    }
+
+    public static void registerDefault(IRetryPolicy retry) {
+        register(DEFAULT_RETRY_POLICY, retry);
     }
 
     /**

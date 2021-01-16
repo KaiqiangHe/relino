@@ -1,10 +1,9 @@
 package com.relino.core.register;
 
+import com.relino.core.config.LeaderSelectorConfig;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.leader.LeaderSelectorListener;
 import org.apache.curator.framework.state.ConnectionState;
-
-import java.util.function.Supplier;
 
 /**
  * 官方文档和建议stateChanged()：
@@ -14,23 +13,17 @@ import java.util.function.Supplier;
  */
 public class RelinoLeaderElectionListener implements LeaderSelectorListener {
 
-    private String name;
-
-    private String leaderPath;
+    private LeaderSelectorConfig leaderSelectorConfig;
 
     private ElectionCandidate task;
 
-    private Supplier<ElectionCandidate> taskSupplier;
-
-    public RelinoLeaderElectionListener(String name, String leaderPath, Supplier<ElectionCandidate> taskSupplier) {
-        this.name = name;
-        this.leaderPath = leaderPath;
-        this.taskSupplier = taskSupplier;
+    public RelinoLeaderElectionListener(LeaderSelectorConfig config) {
+        leaderSelectorConfig = config;
     }
 
     @Override
     public void takeLeadership(CuratorFramework curatorFramework) throws Exception {
-        task = taskSupplier.get();
+        task = leaderSelectorConfig.getTaskSupplier().get();
         task.executeWhenCandidate();
     }
 
@@ -41,12 +34,7 @@ public class RelinoLeaderElectionListener implements LeaderSelectorListener {
         }
     }
 
-    public String getName() {
-        return name;
+    public LeaderSelectorConfig getLeaderSelectorConfig() {
+        return leaderSelectorConfig;
     }
-
-    public String getLeaderPath() {
-        return leaderPath;
-    }
-
 }

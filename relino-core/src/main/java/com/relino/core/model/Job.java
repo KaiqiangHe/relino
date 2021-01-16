@@ -2,9 +2,7 @@ package com.relino.core.model;
 
 import com.relino.core.JobProducer.JobBuilder;
 import com.relino.core.Relino;
-import com.relino.core.db.Store;
 import com.relino.core.support.Utils;
-import com.relino.core.support.thread.Processor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -13,20 +11,16 @@ import java.time.LocalDateTime;
 /**
  * @author kaiqiang.he
  */
-public class Job implements Processor {
-
-    private static final Logger log = LoggerFactory.getLogger(Job.class);
+public class Job {
 
     public static final String DEFAULT_JOB_CODE = Utils.EMPTY_STRING;
 
     public static final int DELAY_EXECUTE_ORDER = -1;
 
-    // TODO: 2020/11/29
-    private static Store store = null;
-
-    public static void setStore(Store store) {
-        Job.store = store;
-    }
+    /**
+     * // TODO: 2021/1/16
+     */
+    private Relino relino;
 
     /**
      * 数据库自动生成的id
@@ -57,8 +51,6 @@ public class Job implements Processor {
      * 当前job将要执行时间
      */
     private LocalDateTime willExecuteTime;
-
-    private boolean retryNow = false;
 
     // ------------------------------------------------------------
     /**
@@ -114,47 +106,13 @@ public class Job implements Processor {
         this.commonAttr = builder.getCommonAttr();
         this.mOper = builder.getMOper();
 
-        setRetryDelayExecute(this.beginTime);
-    }
-
-    @Override
-    public void process() {
-        try {
-            mOper.execute(jobId, commonAttr);
-            boolean updateCommonAttr = false;
-            JobAttr resultValue = mOper.getExecuteResult().getResultValue();
-            if(!resultValue.isEmpty()) {
-                updateCommonAttr = true;
-                commonAttr.addAll(resultValue);
-            }
-
-            if(mOper.isExecuteFinished()) {
-                setExecuteFinish();
-            } else {
-                // 执行未完成、重试
-                LocalDateTime retryExecuteTime = mOper.getRetryExecuteTime();
-                if(retryExecuteTime == null) {
-                    setRetryImmediatelyExecute();
-                } else {
-                    setRetryDelayExecute(retryExecuteTime);
-                }
-            }
-
-            store.updateJob(this, updateCommonAttr);
-
-            if(this.retryNow) {
-                process();
-            }
-
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
+        delayExecute(this.beginTime);
     }
 
     /**
      * 设置job延迟执行
      */
-    private void setRetryDelayExecute(LocalDateTime delayExecuteTime) {
+    public void delayExecute(LocalDateTime delayExecuteTime) {
         LocalDateTime now = LocalDateTime.now();
         if(LocalDateTime.now().minusMinutes(5).isAfter(delayExecuteTime)) {
             throw new RuntimeException("延迟执行时间与当前时间不应超过5分钟, 当前时间[" + Utils.toStrDate(now) +
@@ -164,17 +122,9 @@ public class Job implements Processor {
         this.jobStatus = JobStatus.DELAY;
         this.executeOrder = DELAY_EXECUTE_ORDER;
         this.willExecuteTime = delayExecuteTime;
-        this.retryNow = false;
     }
 
-    private void setRetryImmediatelyExecute() {
-        this.jobStatus = JobStatus.DELAY;
-        this.willExecuteTime = LocalDateTime.now();
-        this.retryNow = true;
-    }
-
-    private void setExecuteFinish() {
-        this.retryNow = false;
+    public void finished() {
         this.jobStatus = JobStatus.FINISHED;
     }
 
@@ -234,6 +184,14 @@ public class Job implements Processor {
 
     public void setWillExecuteTime(LocalDateTime willExecuteTime) {
         this.willExecuteTime = willExecuteTime;
+    }
+
+    public Relino getRelino() {
+        return relino;
+    }
+
+    public void setRelino(Relino relino) {
+        this.relino = relino;
     }
 
     // TODO: 2020/11/22

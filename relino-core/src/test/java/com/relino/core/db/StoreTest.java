@@ -1,25 +1,11 @@
 package com.relino.core.db;
 
-import com.relino.core.helper.TestHelper;
-import com.relino.core.model.*;
-import com.relino.core.model.db.ExecuteTimeEntity;
-import com.relino.core.model.db.JobEntity;
-import com.relino.core.support.id.IdGenerator;
-import com.relino.core.support.id.UUIDIdGenerator;
-import org.junit.Assert;
-import org.junit.Before;
-import org.junit.Test;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
-
-import java.sql.SQLException;
-import java.time.LocalDateTime;
-import java.util.Arrays;
-import java.util.List;
-
+/**
+ * todo 提取有用的测试用例
+ */
 public class StoreTest {
     
-    private static final Logger log = LoggerFactory.getLogger(StoreTest.class);
+    /*private static final Logger log = LoggerFactory.getLogger(StoreTest.class);
 
     private Store store;
 
@@ -250,7 +236,7 @@ public class StoreTest {
         entity = store.selectDeadJobByTime(time.minusMinutes(10));
 
         log.info("end ... ");
-    }
+    }*/
 }
 
 

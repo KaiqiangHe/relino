@@ -1,11 +1,11 @@
 package com.relino.core;
 
-import com.relino.core.db.Store;
 import com.relino.core.exception.JobCreateException;
 import com.relino.core.exception.JobDuplicateException;
 import com.relino.core.model.Job;
 import com.relino.core.model.JobAttr;
 import com.relino.core.model.Oper;
+import com.relino.core.support.db.JobStore;
 import com.relino.core.support.id.IdGenerator;
 
 import java.time.LocalDateTime;
@@ -15,11 +15,11 @@ import java.time.LocalDateTime;
  */
 public class JobProducer {
 
-    private Store store;
+    private JobStore jobStore;
     private IdGenerator idGenerator;
 
-    public JobProducer(Store store, IdGenerator idGenerator) {
-        this.store = store;
+    public JobProducer(JobStore jobStore, IdGenerator idGenerator) {
+        this.jobStore = jobStore;
         this.idGenerator = idGenerator;
     }
 
@@ -31,7 +31,7 @@ public class JobProducer {
      */
     public void createJob(Job job) throws JobCreateException, JobDuplicateException {
         try {
-            store.insertJob(job);
+            jobStore.insertNew(job);
         } catch (Exception e) {
             throw new JobCreateException("创建job失败", e, job);
         }

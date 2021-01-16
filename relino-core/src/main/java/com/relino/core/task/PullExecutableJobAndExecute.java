@@ -1,8 +1,9 @@
 package com.relino.core.task;
 
+import com.relino.core.Relino;
 import com.relino.core.exception.HandleException;
-import com.relino.core.model.executequeue.ExecuteQueue;
 import com.relino.core.model.Job;
+import com.relino.core.model.executequeue.ExecuteQueue;
 import com.relino.core.support.Utils;
 import com.relino.core.support.thread.NamedThreadFactory;
 import com.relino.core.support.thread.QueueSizeLimitExecutor;
@@ -29,15 +30,22 @@ public final class PullExecutableJobAndExecute {
             Executors.newScheduledThreadPool(1, new NamedThreadFactory("DeadJobWatchDog", true));
     private final ScheduledFuture<?> watchFuture;
 
+    private Relino relino;
     private int pullSize;
     private final ExecuteQueue executeQueue;
     private final QueueSizeLimitExecutor<Job> executor;
 
-    public PullExecutableJobAndExecute(int pullSize, int watchPerSeconds, ExecuteQueue executeQueue, QueueSizeLimitExecutor<Job> executor) {
+    public PullExecutableJobAndExecute(Relino relino,
+                                       int pullSize,
+                                       int watchPerSeconds,
+                                       ExecuteQueue executeQueue,
+                                       QueueSizeLimitExecutor<Job> executor) {
 
+        Utils.checkNoNull(relino);
         Utils.check(pullSize, p -> p <= 0, "参数pullSize应该大于0, current = " + pullSize);
         Utils.check(watchPerSeconds, p -> p <= 0, "参数watchPerSeconds应该大于0, current = " + watchPerSeconds);
 
+        this.relino = relino;
         this.pullSize = pullSize;
         this.executeQueue = executeQueue;
         this.executor = executor;
@@ -60,6 +68,7 @@ public final class PullExecutableJobAndExecute {
             int index = 0;
             while(index < jobs.size()) {
                 Job job = jobs.get(index);
+                job.setRelino(relino);
                 if(executor.addItem(job, 50, TimeUnit.MICROSECONDS)) {
                     index++;
                 }

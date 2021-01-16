@@ -1,13 +1,12 @@
 package com.relino.core.helper;
 
 import com.relino.core.JobProducer.JobBuilder;
-import com.relino.core.db.DBBasedStore;
-import com.relino.core.db.Store;
 import com.relino.core.model.ActionManager;
 import com.relino.core.model.Job;
 import com.relino.core.model.JobAttr;
 import com.relino.core.model.Oper;
 import com.relino.core.model.retry.IRetryPolicyManager;
+import com.relino.core.support.db.DBExecutor;
 import com.relino.core.support.id.IdGenerator;
 import com.relino.core.support.id.UUIDIdGenerator;
 import com.zaxxer.hikari.HikariConfig;
@@ -22,6 +21,7 @@ public class TestHelper {
 
     public static final String LOG_ACTION_ID = "logAction";
     public static final String SleepAndLogAction_ID = "SleepAndLogAction";
+    public static final String ZK_CONNECT_STR = "127.0.0.1:2181";
 
     public static void testBootStrap() {
 
@@ -42,8 +42,8 @@ public class TestHelper {
         return new HikariDataSource(config);
     }
 
-    public static Store getStore() {
-        return new DBBasedStore(getDataSource());
+    public static DBExecutor getDBExecutor() {
+        return new DBExecutor(getDataSource());
     }
 
     public static Job getJob(IdGenerator idGenerator, String actionId) {
