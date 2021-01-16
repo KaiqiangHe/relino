@@ -1,7 +1,6 @@
 package com.relino.core.support.db;
 
 import com.relino.core.model.Job;
-import com.relino.core.model.Oper;
 import com.relino.core.model.db.JobEntity;
 import com.relino.core.support.JobUtils;
 import com.relino.core.support.Utils;
@@ -34,7 +33,7 @@ public class JobStore {
                     "    m_action_id, m_oper_status, m_execute_count, m_retry_policy_Id, m_max_retry)" +
                     "value (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
     public int insertNew(Job job) throws SQLException {
-        Oper mOper = job.getMOper();
+        Job.Oper mOper = job.getMOper();
         Object[] params = new Object[] {
                 job.getJobId(), job.getIdempotentId(), job.getJobCode(), job.getJobStatus().getCode(), job.isDelayJob(), job.getBeginTime(),
                 job.getCommonAttr().asString(), job.getWillExecuteTime(), job.getExecuteOrder(),
@@ -68,7 +67,7 @@ public class JobStore {
             sql = UPDATE_JOB;
         }
 
-        Oper oper = job.getMOper();
+        Job.Oper oper = job.getMOper();
         param.add(job.getJobStatus().getCode());
         param.add(job.getExecuteOrder());
         param.add(job.getWillExecuteTime());

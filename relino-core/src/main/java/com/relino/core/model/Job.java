@@ -1,10 +1,11 @@
 package com.relino.core.model;
 
-import com.relino.core.JobProducer.JobBuilder;
+import com.relino.core.JobFactory.JobBuilder;
 import com.relino.core.Relino;
+import com.relino.core.exception.RelinoException;
+import com.relino.core.model.retry.IRetryPolicy;
+import com.relino.core.model.retry.IRetryPolicyManager;
 import com.relino.core.support.Utils;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
 
 import java.time.LocalDateTime;
 
@@ -64,7 +65,7 @@ public class Job {
 
     // -------------------------------------------------------------
     /**
-     * 共享attr
+     * attr
      */
     private final JobAttr commonAttr;
 
@@ -73,6 +74,9 @@ public class Job {
      */
     private final Oper mOper;
 
+    /**
+     * // TODO: 2021/1/16  delete
+     */
     public Job(Long id, String jobId, String idempotentId, String jobCode,
                boolean delayJob, LocalDateTime beginTime,
                JobStatus jobStatus, long executeOrder, LocalDateTime willExecuteTime,
@@ -97,6 +101,7 @@ public class Job {
     }
 
     public Job(JobBuilder builder) {
+
         this.id = null;
         this.jobId = builder.getJobId();
         this.idempotentId = builder.getIdempotentId();
@@ -104,9 +109,15 @@ public class Job {
         this.delayJob = builder.isDelayJob();
         this.beginTime = builder.getBeginTime();
         this.commonAttr = builder.getCommonAttr();
-        this.mOper = builder.getMOper();
-
         delayExecute(this.beginTime);
+
+        Utils.checkNonEmpty(this.jobId);
+        Utils.checkNonEmpty(this.idempotentId);
+        Utils.checkNoNull(this.jobCode);
+        Utils.checkNoNull(this.beginTime);
+        Utils.checkNoNull(this.commonAttr);
+
+        this.mOper = new Oper(builder);
     }
 
     /**
@@ -194,16 +205,132 @@ public class Job {
         this.relino = relino;
     }
 
-    // TODO: 2020/11/22
-    @Override
-    public String toString() {
-        return "Job{" +
-                "id=" + id +
-                ", jobId='" + jobId + '\'' +
-                ", idempotentId='" + idempotentId + '\'' +
-                ", jobCode='" + jobCode + '\'' +
-                ", jobStatus=" + jobStatus +
-                ", executeOrder=" + executeOrder +
-                '}';
+    // ------------------------------------------------------------------------------
+
+    public static class Oper {
+        /**
+         * 默认最大重试次数
+         */
+        public static final int DEFAULT_MAX_RETRY_COUNT = 3;
+
+        /**
+         * actionId
+         */
+        private final String actionId;
+
+        /**
+         * 当前oper的状态
+         */
+        private OperStatus operStatus;
+
+        /**
+         * 已执行次数
+         */
+        private int executeCount;
+
+        // ---------------------------------------------------
+        // 重试
+        /**
+         * 最大重试次数
+         */
+        private final int maxExecuteCount;
+
+        /**
+         * 重试策略
+         */
+        private final String retryPolicyId;
+
+        public Oper(String actionId, OperStatus operStatus, int executeCount, int maxExecuteCount, String retryPolicyId) {
+
+            this.actionId = actionId;
+            this.operStatus = operStatus;
+            this.executeCount = executeCount;
+            this.maxExecuteCount = maxExecuteCount;
+            this.retryPolicyId = retryPolicyId;
+
+            if(this.maxExecuteCount < 1) {
+                throw new RelinoException("Parameter 'maxExecuteCount' should >=1, actual = " + this.maxExecuteCount);
+            }
+
+            if(!ActionManager.containsAction(this.actionId)) {
+                throw new RelinoException("actionId=" + this.actionId + "不存在Action");
+            }
+
+            if(!IRetryPolicyManager.containsIRetryAfter(this.retryPolicyId)) {
+                throw new RelinoException("retryPolicyId=" + this.retryPolicyId + "不存在IRetryPolicy");
+            }
+        }
+
+        public Oper(JobBuilder builder) {
+            this(builder.getActionId(), OperStatus.UN_FINISHED, 0, builder.getMaxExecuteCount(), builder.getRetryPolicyId());
+        }
+
+        /**
+         * 执行当前oper
+         *
+         * @return job not null, 执行结果
+         */
+        public ActionResult execute(String jobId, JobAttr commonAttr) {
+            Action action = ActionManager.getAction(actionId);
+            if(action == null) {
+                throw new RelinoException("Action不存在, actionId = " + actionId);
+            }
+
+            executeCount ++;
+            ActionResult ret = action.execute(jobId, commonAttr, executeCount);
+
+            if(ret.isSuccess()) {
+                operStatus = OperStatus.SUCCESS_FINISHED;
+            } else {
+                if(executeCount >= maxExecuteCount) {
+                    operStatus = OperStatus.FAILED_FINISHED;
+                }
+            }
+
+            return ret;
+        }
+
+        /**
+         * 获取延迟执行的时间, 如果为null 立即重试
+         */
+        public LocalDateTime getRetryExecuteTime() {
+            IRetryPolicy retryPolicy = IRetryPolicyManager.getIRetryAfter(retryPolicyId);
+            if(retryPolicy == null) {
+                throw new RuntimeException("RetryPolicy不存在, retryPolicyId = " + retryPolicyId);
+            }
+            int delaySeconds = retryPolicy.retryAfterSeconds(executeCount);
+            if(delaySeconds == 0) {
+                return null;
+            } else {
+                return LocalDateTime.now().plusSeconds(delaySeconds);
+            }
+        }
+
+        /**
+         * 执行是否结束
+         */
+        public boolean isExecuteFinished() {
+            return operStatus == OperStatus.SUCCESS_FINISHED || operStatus == OperStatus.FAILED_FINISHED;
+        }
+
+        public String getActionId() {
+            return actionId;
+        }
+
+        public OperStatus getOperStatus() {
+            return operStatus;
+        }
+
+        public int getExecuteCount() {
+            return executeCount;
+        }
+
+        public int getMaxExecuteCount() {
+            return maxExecuteCount;
+        }
+
+        public String getRetryPolicyId() {
+            return retryPolicyId;
+        }
     }
 }

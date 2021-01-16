@@ -4,7 +4,6 @@ import com.relino.core.config.RelinoConfig;
 import com.relino.core.helper.TestHelper;
 import com.relino.core.model.Job;
 import com.relino.core.model.JobAttr;
-import com.relino.core.model.Oper;
 import com.relino.core.support.db.DBExecutor;
 import com.relino.core.task.DeadJobWatchDog;
 import org.junit.Before;
@@ -34,15 +33,21 @@ public class RelinoTest {
     @Test
     public void test() throws InterruptedException, IOException {
         // 一个线程不断提交job
-        JobProducer jobProducer = app.jobProducer;
+        JobFactory jobProducer = app.jobProducer;
 
         for (int i = 0; i < 50; i++) {
             new Thread(() -> {
                 for (int count = 0; count < 20; count++) {
-                    Oper mOper = Oper.builder(TestHelper.SleepAndLogAction_ID).maxExecuteCount(5).build();
+
                     JobAttr initAttr = new JobAttr();
                     initAttr.setLong("sleepTime", 10);
-                    Job job = jobProducer.builder(mOper).commonAttr(initAttr).delayJob(10 + ThreadLocalRandom.current().nextInt(100)).build();
+
+                    Job job = jobProducer.builder(TestHelper.SleepAndLogAction_ID)
+                            .maxExecuteCount(5)
+                            .commonAttr(initAttr)
+                            .delayExecute(10 + ThreadLocalRandom.current().nextInt(100))
+                            .build();
+
                     jobProducer.createJob(job);
                     try {
                         Thread.sleep(100);

@@ -1,6 +1,10 @@
 package com.relino.core.model.db;
 
-import com.relino.core.model.*;
+import com.relino.core.model.Job;
+import com.relino.core.model.Job.Oper;
+import com.relino.core.model.JobAttr;
+import com.relino.core.model.JobStatus;
+import com.relino.core.model.OperStatus;
 import com.relino.core.support.Utils;
 
 import java.time.LocalDateTime;

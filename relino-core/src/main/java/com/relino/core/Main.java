@@ -1,7 +1,11 @@
 package com.relino.core;
 
 import com.relino.core.config.RelinoConfig;
-import com.relino.core.model.*;
+import com.relino.core.model.Action;
+import com.relino.core.model.ActionResult;
+import com.relino.core.model.Job;
+import com.relino.core.model.JobAttr;
+import com.relino.core.model.retry.IRetryPolicyManager;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
@@ -12,13 +16,13 @@ import java.time.LocalDateTime;
 import java.util.concurrent.ThreadLocalRandom;
 
 /**
- *
- *
- *
  * RoadMap:
  * 1. 考虑系统整体设计，细化Job模型职责，完善job execute方法，完善用户使用API，可以用UML类图的形式描述
- * 2. 重新设计Store层，以事务、悲观锁、业务相关sql等分开。不应在该层直接映射到sql，应该做业务层的抽象
- * 3. 完善各种配置
+ *    -> 基本完成
+ * 2. 重新设计Store层，以事务、悲观锁、业务相关sql等分开。不应在该层直接映射到sql，应该做业务层的抽象 完成
+ *    -> 后续可参考mybatis SqlSession设计 目前的方案足够了
+ *
+ * 3. 完善各种配置 完成
  * 4. 参考其他系统启动，完善项目启动流程
  * 5. 更充分的测试 & 自动化测试
  * V1.2
@@ -59,15 +63,23 @@ public class Main {
 
         Relino relino = new Relino(relinoConfig);
 
+        long timeMillis = System.currentTimeMillis();
+        int n = 0;
+
         while (true) {
             try {
-                Oper mOper = Oper.builder(sendSmsActionId).maxExecuteCount(3).build();
+
                 JobAttr initAttr = new JobAttr();
                 initAttr.setString("userId", "orange" + System.currentTimeMillis());
                 initAttr.setString("sendData", "Hello, Test Relino.");
-                Job job = relino.jobProducer.builder(mOper)
+
+                Job job = relino.jobProducer.builder(sendSmsActionId)
+                        .jobCode("test")
+                        .idempotentId(timeMillis + "-" + (n++))
+                        .maxExecuteCount(5)
+                        .retryPolicy(IRetryPolicyManager.IMMEDIATELY_RETRY_POLICY)
+                        .delayExecute(LocalDateTime.now().plusSeconds(10))
                         .commonAttr(initAttr)
-                        .delayJob(10 + ThreadLocalRandom.current().nextInt(100))
                         .build();
 
                 relino.jobProducer.createJob(job);

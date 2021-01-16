@@ -1,10 +1,9 @@
 package com.relino.core.helper;
 
-import com.relino.core.JobProducer.JobBuilder;
+import com.relino.core.JobFactory.JobBuilder;
 import com.relino.core.model.ActionManager;
 import com.relino.core.model.Job;
 import com.relino.core.model.JobAttr;
-import com.relino.core.model.Oper;
 import com.relino.core.model.retry.IRetryPolicyManager;
 import com.relino.core.support.db.DBExecutor;
 import com.relino.core.support.id.IdGenerator;
@@ -47,10 +46,12 @@ public class TestHelper {
     }
 
     public static Job getJob(IdGenerator idGenerator, String actionId) {
-        Oper oper = Oper.builder(actionId).maxExecuteCount(10).retryPolicy(IRetryPolicyManager.IMMEDIATELY_RETRY_POLICY).build();
         JobAttr commonAttr = new JobAttr();
         commonAttr.setString(LogAction.logValue, "hello-" + System.currentTimeMillis());
-        Job job = new JobBuilder(idGenerator.getNext(), oper).delayJob(100).commonAttr(commonAttr).build();
+        Job job = new JobBuilder(idGenerator.getNext(), actionId)
+                .maxExecuteCount(10)
+                .retryPolicy(IRetryPolicyManager.IMMEDIATELY_RETRY_POLICY)
+                .delayExecute(100).commonAttr(commonAttr).build();
 
         return job;
     }

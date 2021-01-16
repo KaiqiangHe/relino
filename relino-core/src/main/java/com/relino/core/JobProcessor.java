@@ -1,9 +1,9 @@
 package com.relino.core;
 
 import com.relino.core.exception.HandleException;
+import com.relino.core.model.ActionResult;
 import com.relino.core.model.Job;
 import com.relino.core.model.JobAttr;
-import com.relino.core.model.Oper;
 import com.relino.core.support.Utils;
 import com.relino.core.support.db.JobStore;
 import com.relino.core.support.thread.Processor;
@@ -29,12 +29,12 @@ public class JobProcessor implements Processor<Job> {
 
         try {
             String jobId = job.getJobId();
-            Oper mOper = job.getMOper();
+            Job.Oper mOper = job.getMOper();
             JobAttr commonAttr = job.getCommonAttr();
 
-            mOper.execute(jobId, commonAttr);
+            ActionResult actionResult = mOper.execute(jobId, commonAttr);
             boolean updateCommonAttr = false;
-            JobAttr resultValue = mOper.getExecuteResult().getResultValue();
+            JobAttr resultValue = actionResult.getResultValue();
             if(!resultValue.isEmpty()) {
                 updateCommonAttr = true;
                 commonAttr.addAll(resultValue);

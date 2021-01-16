@@ -4,7 +4,7 @@ import com.relino.core.exception.JobCreateException;
 import com.relino.core.exception.JobDuplicateException;
 import com.relino.core.model.Job;
 import com.relino.core.model.JobAttr;
-import com.relino.core.model.Oper;
+import com.relino.core.model.retry.IRetryPolicyManager;
 import com.relino.core.support.db.JobStore;
 import com.relino.core.support.id.IdGenerator;
 
@@ -13,12 +13,12 @@ import java.time.LocalDateTime;
 /**
  * @author kaiqiang.he
  */
-public class JobProducer {
+public class JobFactory {
 
     private JobStore jobStore;
     private IdGenerator idGenerator;
 
-    public JobProducer(JobStore jobStore, IdGenerator idGenerator) {
+    public JobFactory(JobStore jobStore, IdGenerator idGenerator) {
         this.jobStore = jobStore;
         this.idGenerator = idGenerator;
     }
@@ -37,30 +37,29 @@ public class JobProducer {
         }
     }
 
-    public JobBuilder builder(Oper mainOper) {
+    public JobBuilder builder(String actionId) {
         String jobId = idGenerator.getNext();
-        return new JobBuilder(jobId, mainOper);
-    }
-
-    public JobBuilder builder(String jobId, Oper mainOper) {
-        return new JobBuilder(jobId, mainOper);
+        return new JobBuilder(jobId, actionId);
     }
 
     public static class JobBuilder {
 
         private final String jobId;
-        private final Oper mOper;
         private String idempotentId;
+        private final String actionId;
 
         private String jobCode = Job.DEFAULT_JOB_CODE;
         private boolean delayJob = false;
         private LocalDateTime beginTime = LocalDateTime.now();
         private JobAttr commonAttr = new JobAttr();
 
-        public JobBuilder(String jobId, Oper mOper) {
+        private int maxExecuteCount = Job.Oper.DEFAULT_MAX_RETRY_COUNT;
+        private String retryPolicyId = IRetryPolicyManager.DEFAULT_RETRY_POLICY;
+
+        public JobBuilder(String jobId, String actionId) {
             this.jobId = jobId;
-            this.mOper = mOper;
             this.idempotentId = jobId;
+            this.actionId = actionId;
         }
 
         public JobBuilder idempotentId(String idempotentId) {
@@ -73,14 +72,30 @@ public class JobProducer {
             return this;
         }
 
-        public JobBuilder delayJob(int delaySeconds) {
+        public JobBuilder delayExecute(int delaySeconds) {
             this.delayJob = true;
             this.beginTime = LocalDateTime.now().plusSeconds(delaySeconds);
             return this;
         }
 
+        public JobBuilder delayExecute(LocalDateTime executeTime) {
+            this.delayJob = true;
+            this.beginTime = executeTime;
+            return this;
+        }
+
         public JobBuilder commonAttr(JobAttr commonAttr) {
             this.commonAttr = commonAttr;
+            return this;
+        }
+
+        public JobBuilder maxExecuteCount(int maxRetry) {
+            this.maxExecuteCount = maxRetry;
+            return this;
+        }
+
+        public JobBuilder retryPolicy(String retryPolicyId) {
+            this.retryPolicyId = retryPolicyId;
             return this;
         }
 
@@ -90,10 +105,6 @@ public class JobProducer {
 
         public String getJobId() {
             return jobId;
-        }
-
-        public Oper getMOper() {
-            return mOper;
         }
 
         public String getIdempotentId() {
@@ -114,6 +125,18 @@ public class JobProducer {
 
         public JobAttr getCommonAttr() {
             return commonAttr;
+        }
+
+        public String getActionId() {
+            return actionId;
+        }
+
+        public int getMaxExecuteCount() {
+            return maxExecuteCount;
+        }
+
+        public String getRetryPolicyId() {
+            return retryPolicyId;
         }
     }
 }

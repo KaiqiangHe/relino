@@ -42,7 +42,7 @@ public class Relino {
     public final IdGenerator idGenerator;
     public final QueueSizeLimitExecutor<Job> jobExecutor;
     public final ExecuteQueue executeQueue;
-    public final JobProducer jobProducer;
+    public final JobFactory jobProducer;
     public final JobProcessor jobProcessor;
     public final PullExecutableJobAndExecute pullExecutableJobAndExecute;
 
@@ -75,7 +75,7 @@ public class Relino {
                 executeQueue,
                 jobExecutor);
 
-        this.jobProducer = new JobProducer(jobStore, idGenerator);
+        this.jobProducer = new JobFactory(jobStore, idGenerator);
 
         // 注册默认重试策略
         IRetryPolicyManager.registerDefault(relinoConfig.getDefaultRetryPolicy());

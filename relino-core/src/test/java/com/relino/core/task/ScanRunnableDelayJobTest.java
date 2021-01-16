@@ -1,9 +1,8 @@
 package com.relino.core.task;
 
-import com.relino.core.JobProducer;
+import com.relino.core.JobFactory;
 import com.relino.core.helper.TestHelper;
 import com.relino.core.model.Job;
-import com.relino.core.model.Oper;
 import com.relino.core.model.retry.IRetryPolicyManager;
 import com.relino.core.support.db.DBExecutor;
 import com.relino.core.support.db.JobStore;
@@ -15,7 +14,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class ScanRunnableDelayJobTest {
 
-    private JobProducer jobProducer;
+    private JobFactory jobProducer;
     private ScanRunnableDelayJob scanRunnableDelayJob;
 
     @Before
@@ -23,17 +22,18 @@ public class ScanRunnableDelayJobTest {
         TestHelper.testBootStrap();
         DBExecutor dbExecutor = TestHelper.getDBExecutor();
         IdGenerator idGenerator = TestHelper.getIdGenerator();
-        jobProducer = new JobProducer(new JobStore(dbExecutor), idGenerator);
+        jobProducer = new JobFactory(new JobStore(dbExecutor), idGenerator);
         scanRunnableDelayJob = new ScanRunnableDelayJob(dbExecutor, 10);
 
         // 创建测试数据
         for (int i = 0; i < 5000; i++) {
-            Oper mOper = Oper.builder(TestHelper.LOG_ACTION_ID)
+
+            Job job = jobProducer.builder(TestHelper.LOG_ACTION_ID)
                     .retryPolicy(IRetryPolicyManager.IMMEDIATELY_RETRY_POLICY)
                     .maxExecuteCount(10)
-                    .build();
-            Job job = jobProducer.builder(mOper).delayJob(10 + ThreadLocalRandom.current().nextInt(1000)).build();
+                    .delayExecute(10 + ThreadLocalRandom.current().nextInt(1000)).build();
             jobProducer.createJob(job);
+
         }
     }
 
