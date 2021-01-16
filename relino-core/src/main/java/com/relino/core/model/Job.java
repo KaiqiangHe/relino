@@ -1,6 +1,7 @@
 package com.relino.core.model;
 
 import com.relino.core.JobProducer.JobBuilder;
+import com.relino.core.Relino;
 import com.relino.core.support.Utils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -12,11 +13,14 @@ import java.time.LocalDateTime;
  */
 public class Job {
 
-    private static final Logger log = LoggerFactory.getLogger(Job.class);
-
     public static final String DEFAULT_JOB_CODE = Utils.EMPTY_STRING;
 
     public static final int DELAY_EXECUTE_ORDER = -1;
+
+    /**
+     * // TODO: 2021/1/16
+     */
+    private Relino relino;
 
     /**
      * 数据库自动生成的id
@@ -180,6 +184,14 @@ public class Job {
 
     public void setWillExecuteTime(LocalDateTime willExecuteTime) {
         this.willExecuteTime = willExecuteTime;
+    }
+
+    public Relino getRelino() {
+        return relino;
+    }
+
+    public void setRelino(Relino relino) {
+        this.relino = relino;
     }
 
     // TODO: 2020/11/22

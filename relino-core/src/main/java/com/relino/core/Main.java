@@ -50,12 +50,13 @@ public class Main {
         config.setMaximumPoolSize(20);
         DataSource dataSource = new HikariDataSource(config);
 
-        // create action
-        String sendSmsActionId = "sendSms";
-        ActionManager.register(sendSmsActionId, new SendSms());
-
         RelinoConfig relinoConfig = new RelinoConfig("test-relino", ZK_CONNECT_STR, dataSource);
         relinoConfig.setExecutorJobQueueSize(100);
+
+        // create action
+        String sendSmsActionId = "sendSms";
+        relinoConfig.registerAction(sendSmsActionId, new SendSms());
+
         Relino relino = new Relino(relinoConfig);
 
         while (true) {
@@ -64,7 +65,11 @@ public class Main {
                 JobAttr initAttr = new JobAttr();
                 initAttr.setString("userId", "orange" + System.currentTimeMillis());
                 initAttr.setString("sendData", "Hello, Test Relino.");
-                Job job = relino.jobProducer.builder(mOper).commonAttr(initAttr).delayJob(10 + ThreadLocalRandom.current().nextInt(100)).build();
+                Job job = relino.jobProducer.builder(mOper)
+                        .commonAttr(initAttr)
+                        .delayJob(10 + ThreadLocalRandom.current().nextInt(100))
+                        .build();
+
                 relino.jobProducer.createJob(job);
                 log.info("crate job success, jobId = {}", job.getJobId());
                 Thread.sleep(50);
