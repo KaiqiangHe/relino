@@ -69,7 +69,7 @@ public class Main {
                 JobAttr initAttr = new JobAttr();
                 initAttr.setString("userId", "orange" + System.currentTimeMillis());
 
-                Job job = relino.jobProducer.builder(sayHelloActionId)
+                Job job = relino.jobFactory.builder(sayHelloActionId)
                         .idempotentId(timeMillis + "-" + (n++))                         // 幂等id
                         .maxExecuteCount(5)                                             // 最大重试次数
                         .retryPolicy(IRetryPolicyManager.IMMEDIATELY_RETRY_POLICY)      // 重试策略
@@ -77,7 +77,7 @@ public class Main {
                         .commonAttr(initAttr)                                           // 设置job属性
                         .build();
 
-                relino.jobProducer.createJob(job);
+                relino.jobFactory.createJob(job);
 
                 log.info("create job success, jobId = {}", job.getJobId());
                 Thread.sleep(50);

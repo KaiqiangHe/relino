@@ -4,6 +4,8 @@ import com.relino.core.model.Action;
 import com.relino.core.model.retry.IRetryPolicy;
 import com.relino.core.model.retry.LinearRetryPolicy;
 import com.relino.core.support.Utils;
+import com.relino.core.support.id.IdGenerator;
+import com.relino.core.support.id.UUIDIdGenerator;
 
 import javax.sql.DataSource;
 import java.util.ArrayList;
@@ -44,6 +46,8 @@ public class RelinoConfig {
 
     // Action
     private Map<String, Action> actionMap = new HashMap<>();
+
+    private IdGenerator idGenerator = new UUIDIdGenerator();
 
     public RelinoConfig(String appId, String zkConnectStr, DataSource dataSource) {
 
@@ -146,5 +150,13 @@ public class RelinoConfig {
 
     public void registerAction(String actionId, Action action) {
         actionMap.put(actionId, action);
+    }
+
+    public IdGenerator getIdGenerator() {
+        return idGenerator;
+    }
+
+    public void setIdGenerator(IdGenerator idGenerator) {
+        this.idGenerator = idGenerator;
     }
 }

@@ -22,7 +22,7 @@ import java.util.stream.Collectors;
  *
  * @author kaiqiang.he
  */
-public class PessimisticLockExecuteQueue implements ExecuteQueue {
+public class PessimisticLockExecuteQueue implements RunnableExecuteQueue {
 
     private static final String EXECUTE_QUEUE_CURSOR = "execute_queue_cursor";
 
@@ -44,7 +44,7 @@ public class PessimisticLockExecuteQueue implements ExecuteQueue {
      * @return not null, maybe empty
      */
     @Override
-    public synchronized List<Job> getNextExecutableJob(int batchSize) throws Exception {
+    public synchronized List<Job> getNextRunnableJob(int batchSize) throws Exception {
 
         if(batchSize < 1) {
             throw new IllegalArgumentException("参数batchSize比速大于0, 当前值为" + batchSize);

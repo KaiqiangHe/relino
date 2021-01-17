@@ -33,7 +33,7 @@ public class RelinoTest {
     @Test
     public void test() throws InterruptedException, IOException {
         // 一个线程不断提交job
-        JobFactory jobProducer = app.jobProducer;
+        JobFactory jobProducer = app.jobFactory;
 
         for (int i = 0; i < 50; i++) {
             new Thread(() -> {

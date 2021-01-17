@@ -4,15 +4,13 @@ import com.relino.core.config.LeaderSelectorConfig;
 import com.relino.core.config.RelinoConfig;
 import com.relino.core.model.ActionManager;
 import com.relino.core.model.Job;
-import com.relino.core.model.executequeue.ExecuteQueue;
 import com.relino.core.model.executequeue.PessimisticLockExecuteQueue;
+import com.relino.core.model.executequeue.RunnableExecuteQueue;
 import com.relino.core.model.retry.IRetryPolicyManager;
 import com.relino.core.register.CuratorLeaderElection;
 import com.relino.core.register.RelinoLeaderElectionListener;
 import com.relino.core.support.db.DBExecutor;
 import com.relino.core.support.db.JobStore;
-import com.relino.core.support.id.IdGenerator;
-import com.relino.core.support.id.UUIDIdGenerator;
 import com.relino.core.support.thread.QueueSizeLimitExecutor;
 import com.relino.core.task.DeadJobWatchDog;
 import com.relino.core.task.PullExecutableJobAndExecute;
@@ -39,14 +37,11 @@ public class Relino {
 
     public final DBExecutor dbExecutor;
     public final JobStore jobStore;
-    public final IdGenerator idGenerator;
+    public final JobFactory jobFactory;
     public final QueueSizeLimitExecutor<Job> jobExecutor;
-    public final ExecuteQueue executeQueue;
-    public final JobFactory jobProducer;
     public final JobProcessor jobProcessor;
+    public final RunnableExecuteQueue runnableExecuteQueue;
     public final PullExecutableJobAndExecute pullExecutableJobAndExecute;
-
-    //public final ActionManager actionManager = new ActionManager();
 
     public final CuratorFramework curatorClient;
     public final CuratorLeaderElection curatorLeaderElection;
@@ -58,7 +53,6 @@ public class Relino {
         this.dbExecutor = new DBExecutor(dataSource);
         this.jobStore = new JobStore(this.dbExecutor);
 
-        this.idGenerator = new UUIDIdGenerator();
         this.jobProcessor = new JobProcessor(jobStore);
         this.jobExecutor = new QueueSizeLimitExecutor<Job>(
                 "job",
@@ -67,15 +61,15 @@ public class Relino {
                 relinoConfig.getExecutorJobQueueSize(),
                 jobProcessor);
 
-        this.executeQueue = new PessimisticLockExecuteQueue(dbExecutor);
+        this.runnableExecuteQueue = new PessimisticLockExecuteQueue(dbExecutor);
         this.pullExecutableJobAndExecute = new PullExecutableJobAndExecute(
                 this,
                 relinoConfig.getPullRunnableJobBatchSize(),
                 DEFAULT_WATCH_DOG_PER_SECOND,
-                executeQueue,
+                runnableExecuteQueue,
                 jobExecutor);
 
-        this.jobProducer = new JobFactory(jobStore, idGenerator);
+        this.jobFactory = new JobFactory(jobStore, relinoConfig.getIdGenerator());
 
         // 注册默认重试策略
         IRetryPolicyManager.registerDefault(relinoConfig.getDefaultRetryPolicy());

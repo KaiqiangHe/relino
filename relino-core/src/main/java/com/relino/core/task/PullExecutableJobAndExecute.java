@@ -3,7 +3,7 @@ package com.relino.core.task;
 import com.relino.core.Relino;
 import com.relino.core.exception.HandleException;
 import com.relino.core.model.Job;
-import com.relino.core.model.executequeue.ExecuteQueue;
+import com.relino.core.model.executequeue.RunnableExecuteQueue;
 import com.relino.core.support.Utils;
 import com.relino.core.support.thread.NamedThreadFactory;
 import com.relino.core.support.thread.QueueSizeLimitExecutor;
@@ -32,13 +32,13 @@ public final class PullExecutableJobAndExecute {
 
     private Relino relino;
     private int pullSize;
-    private final ExecuteQueue executeQueue;
+    private final RunnableExecuteQueue executeQueue;
     private final QueueSizeLimitExecutor<Job> executor;
 
     public PullExecutableJobAndExecute(Relino relino,
                                        int pullSize,
                                        int watchPerSeconds,
-                                       ExecuteQueue executeQueue,
+                                       RunnableExecuteQueue executeQueue,
                                        QueueSizeLimitExecutor<Job> executor) {
 
         Utils.checkNoNull(relino);
@@ -63,7 +63,7 @@ public final class PullExecutableJobAndExecute {
 
     protected void pullJob() throws Exception {
         long start = System.currentTimeMillis();
-        List<Job> jobs = executeQueue.getNextExecutableJob(pullSize);
+        List<Job> jobs = executeQueue.getNextRunnableJob(pullSize);
         while (!Utils.isEmpty(jobs)) {
             int index = 0;
             while(index < jobs.size()) {
@@ -73,7 +73,7 @@ public final class PullExecutableJobAndExecute {
                     index++;
                 }
             }
-            jobs = executeQueue.getNextExecutableJob(pullSize);
+            jobs = executeQueue.getNextRunnableJob(pullSize);
         }
         if(log.isDebugEnabled()) {
             log.debug("pull job ids = [{}], time = {}",

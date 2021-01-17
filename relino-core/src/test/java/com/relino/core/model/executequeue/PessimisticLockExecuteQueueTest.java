@@ -19,7 +19,7 @@ public class PessimisticLockExecuteQueueTest {
 
     private static final Logger log = LoggerFactory.getLogger(PessimisticLockExecuteQueueTest.class);
 
-    private ExecuteQueue executeQueue;
+    private RunnableExecuteQueue executeQueue;
     private JobStore jobStore;
     private IdGenerator idGenerator;
 
@@ -45,7 +45,7 @@ public class PessimisticLockExecuteQueueTest {
     public void launch() throws Exception {
 
         while(true) {
-            List<Job> nextExecutableJob = executeQueue.getNextExecutableJob(20);
+            List<Job> nextExecutableJob = executeQueue.getNextRunnableJob(20);
             if(nextExecutableJob.isEmpty()) {
                 break;
             }
