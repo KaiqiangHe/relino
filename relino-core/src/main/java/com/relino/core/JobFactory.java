@@ -6,7 +6,7 @@ import com.relino.core.exception.RelinoException;
 import com.relino.core.model.Action;
 import com.relino.core.model.Job;
 import com.relino.core.model.JobAttr;
-import com.relino.core.model.retry.IRetryPolicyManager;
+import com.relino.core.model.retry.IRetryPolicy;
 import com.relino.core.support.Utils;
 import com.relino.core.support.bean.BeanManager;
 import com.relino.core.support.bean.BeanWrapper;
@@ -23,8 +23,11 @@ public class JobFactory {
     private JobStore jobStore;
     private IdGenerator idGenerator;
     private BeanManager<Action> actionBeanManager;
+    private BeanManager<IRetryPolicy> retryPolicyBeanManager;
 
-    public JobFactory(JobStore jobStore, IdGenerator idGenerator, BeanManager<Action> actionBeanManager) {
+    public JobFactory(JobStore jobStore, IdGenerator idGenerator,
+                      BeanManager<Action> actionBeanManager, BeanManager<IRetryPolicy> retryPolicyBeanManager) {
+        this.retryPolicyBeanManager = retryPolicyBeanManager;
 
         Utils.checkNoNull(jobStore);
         Utils.checkNoNull(idGenerator);
@@ -58,10 +61,12 @@ public class JobFactory {
         }
 
         String jobId = idGenerator.getNext();
-        return new JobBuilder(jobId, action);
+        return new JobBuilder(jobId, action, retryPolicyBeanManager);
     }
 
     public static class JobBuilder {
+
+        private final BeanManager<IRetryPolicy> retryPolicyBeanManager;
 
         private final String jobId;
         private String idempotentId;
@@ -73,12 +78,14 @@ public class JobFactory {
         private JobAttr commonAttr = new JobAttr();
 
         private int maxExecuteCount = Job.Oper.DEFAULT_MAX_RETRY_COUNT;
-        private String retryPolicyId = IRetryPolicyManager.DEFAULT_RETRY_POLICY;
+        private BeanWrapper<IRetryPolicy> retryPolicy;
 
-        public JobBuilder(String jobId, BeanWrapper<Action> action) {
+        public JobBuilder(String jobId, BeanWrapper<Action> action, BeanManager<IRetryPolicy> retryPolicyBeanManager) {
+            this.retryPolicyBeanManager = retryPolicyBeanManager;
             this.jobId = jobId;
             this.idempotentId = jobId;
             this.action = action;
+            this.retryPolicy = retryPolicyBeanManager.getBeanWrapper(Relino.DEFAULT_RETRY_POLICY);
         }
 
         public JobBuilder idempotentId(String idempotentId) {
@@ -114,7 +121,11 @@ public class JobFactory {
         }
 
         public JobBuilder retryPolicy(String retryPolicyId) {
-            this.retryPolicyId = retryPolicyId;
+            BeanWrapper<IRetryPolicy> retryPolicy = retryPolicyBeanManager.getBeanWrapper(retryPolicyId);
+            if(retryPolicy == null) {
+                throw new RuntimeException("RetryPolicy不存在, retryPolicyId = " + retryPolicyId);
+            }
+            this.retryPolicy = retryPolicy;
             return this;
         }
 
@@ -154,8 +165,8 @@ public class JobFactory {
             return maxExecuteCount;
         }
 
-        public String getRetryPolicyId() {
-            return retryPolicyId;
+        public BeanWrapper<IRetryPolicy> getRetryPolicy() {
+            return retryPolicy;
         }
     }
 }

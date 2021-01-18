@@ -9,7 +9,8 @@ import com.relino.core.model.ObjectConverter;
 import com.relino.core.model.db.JobEntity;
 import com.relino.core.model.executequeue.PessimisticLockExecuteQueue;
 import com.relino.core.model.executequeue.RunnableExecuteQueue;
-import com.relino.core.model.retry.IRetryPolicyManager;
+import com.relino.core.model.retry.IRetryPolicy;
+import com.relino.core.model.retry.ImmediatelyRetryPolicy;
 import com.relino.core.register.CuratorLeaderElection;
 import com.relino.core.register.RelinoLeaderElectionListener;
 import com.relino.core.support.bean.BeanManager;
@@ -37,6 +38,9 @@ public class Relino {
     private static final int CONNECTION_TIMEOUT = 3 * 1000;
     private static final int DEFAULT_WATCH_DOG_PER_SECOND = 1;
 
+    public static final String DEFAULT_RETRY_POLICY = "_df";
+    public static final String IMMEDIATELY_RETRY_POLICY = "_im";
+
     public final RelinoConfig relinoConfig;
 
     public final DBExecutor dbExecutor;
@@ -48,6 +52,7 @@ public class Relino {
     public final PullExecutableJobAndExecute pullExecutableJobAndExecute;
 
     public final BeanManager<Action> actionManager = new BeanManager<>();
+    public final BeanManager<IRetryPolicy> retryPolicyBeanManager = new BeanManager<>();
 
     public final CuratorFramework curatorClient;
     public final CuratorLeaderElection curatorLeaderElection;
@@ -57,6 +62,12 @@ public class Relino {
 
         // 注册Action
         relinoConfig.getActionMap().forEach(actionManager::register);
+
+        // 注册默认重试策略
+        retryPolicyBeanManager.register(DEFAULT_RETRY_POLICY, relinoConfig.getDefaultRetryPolicy());
+        retryPolicyBeanManager.register(IMMEDIATELY_RETRY_POLICY, new ImmediatelyRetryPolicy());
+        // 注册自定义重试策略
+        relinoConfig.getSelfRetryPolicy().forEach(retryPolicyBeanManager::register);
 
         DataSource dataSource = relinoConfig.getDataSource();
         this.dbExecutor = new DBExecutor(dataSource);
@@ -70,7 +81,7 @@ public class Relino {
                 relinoConfig.getExecutorJobQueueSize(),
                 jobProcessor);
 
-        ObjectConverter<JobEntity, Job> jobConverter = new JobConverter(actionManager);
+        ObjectConverter<JobEntity, Job> jobConverter = new JobConverter(actionManager, retryPolicyBeanManager);
         this.runnableExecuteQueue = new PessimisticLockExecuteQueue(dbExecutor, jobConverter);
         this.pullExecutableJobAndExecute = new PullExecutableJobAndExecute(
                 this,
@@ -79,12 +90,7 @@ public class Relino {
                 runnableExecuteQueue,
                 jobExecutor);
 
-        this.jobFactory = new JobFactory(jobStore, relinoConfig.getIdGenerator(), actionManager);
-
-        // 注册默认重试策略
-        IRetryPolicyManager.registerDefault(relinoConfig.getDefaultRetryPolicy());
-        // 注册自定义重试策略
-        relinoConfig.getSelfRetryPolicy().forEach(IRetryPolicyManager::register);
+        this.jobFactory = new JobFactory(jobStore, relinoConfig.getIdGenerator(), actionManager, retryPolicyBeanManager);
 
         // 主节点选取
         // 创建Curator Client

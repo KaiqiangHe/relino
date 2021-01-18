@@ -4,7 +4,6 @@ import com.relino.core.JobFactory.JobBuilder;
 import com.relino.core.Relino;
 import com.relino.core.exception.RelinoException;
 import com.relino.core.model.retry.IRetryPolicy;
-import com.relino.core.model.retry.IRetryPolicyManager;
 import com.relino.core.support.Utils;
 import com.relino.core.support.bean.BeanWrapper;
 
@@ -236,29 +235,26 @@ public class Job {
         /**
          * 重试策略
          */
-        private final String retryPolicyId;
+        private final BeanWrapper<IRetryPolicy> retryPolicy;
 
-        public Oper(BeanWrapper<Action> action, OperStatus operStatus, int executeCount, int maxExecuteCount, String retryPolicyId) {
+        public Oper(BeanWrapper<Action> action, OperStatus operStatus, int executeCount, int maxExecuteCount, BeanWrapper<IRetryPolicy> retryPolicy) {
 
             this.action = action;
             this.operStatus = operStatus;
             this.executeCount = executeCount;
             this.maxExecuteCount = maxExecuteCount;
-            this.retryPolicyId = retryPolicyId;
+            this.retryPolicy = retryPolicy;
 
             Utils.checkNoNull(this.action);
+            Utils.checkNoNull(retryPolicy);
 
             if(this.maxExecuteCount < 1) {
                 throw new RelinoException("Parameter 'maxExecuteCount' should >=1, actual = " + this.maxExecuteCount);
             }
-
-            if(!IRetryPolicyManager.containsIRetryAfter(this.retryPolicyId)) {
-                throw new RelinoException("retryPolicyId=" + this.retryPolicyId + "不存在IRetryPolicy");
-            }
         }
 
         public Oper(JobBuilder builder) {
-            this(builder.getAction(), OperStatus.UN_FINISHED, 0, builder.getMaxExecuteCount(), builder.getRetryPolicyId());
+            this(builder.getAction(), OperStatus.UN_FINISHED, 0, builder.getMaxExecuteCount(), builder.getRetryPolicy());
         }
 
         /**
@@ -286,11 +282,8 @@ public class Job {
          * 获取延迟执行的时间, 如果为null 立即重试
          */
         public LocalDateTime getRetryExecuteTime() {
-            IRetryPolicy retryPolicy = IRetryPolicyManager.getIRetryAfter(retryPolicyId);
-            if(retryPolicy == null) {
-                throw new RuntimeException("RetryPolicy不存在, retryPolicyId = " + retryPolicyId);
-            }
-            int delaySeconds = retryPolicy.retryAfterSeconds(executeCount);
+
+            int delaySeconds = retryPolicy.getBean().retryAfterSeconds(executeCount);
             if(delaySeconds == 0) {
                 return null;
             } else {
@@ -317,12 +310,12 @@ public class Job {
             return maxExecuteCount;
         }
 
-        public String getRetryPolicyId() {
-            return retryPolicyId;
-        }
-
         public BeanWrapper<Action> getAction() {
             return action;
+        }
+
+        public BeanWrapper<IRetryPolicy> getRetryPolicy() {
+            return retryPolicy;
         }
     }
 }

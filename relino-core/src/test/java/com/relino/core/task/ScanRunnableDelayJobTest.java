@@ -1,9 +1,9 @@
 package com.relino.core.task;
 
 import com.relino.core.JobFactory;
+import com.relino.core.Relino;
 import com.relino.core.helper.TestHelper;
 import com.relino.core.model.Job;
-import com.relino.core.model.retry.IRetryPolicyManager;
 import com.relino.core.support.db.DBExecutor;
 import com.relino.core.support.id.IdGenerator;
 import org.junit.Before;
@@ -29,7 +29,7 @@ public class ScanRunnableDelayJobTest {
         for (int i = 0; i < 5000; i++) {
 
             Job job = jobProducer.builder(TestHelper.LOG_ACTION_ID)
-                    .retryPolicy(IRetryPolicyManager.IMMEDIATELY_RETRY_POLICY)
+                    .retryPolicy(Relino.IMMEDIATELY_RETRY_POLICY)
                     .maxExecuteCount(10)
                     .delayExecute(10 + ThreadLocalRandom.current().nextInt(1000)).build();
             jobProducer.createJob(job);

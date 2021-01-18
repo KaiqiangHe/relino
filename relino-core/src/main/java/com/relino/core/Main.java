@@ -5,7 +5,6 @@ import com.relino.core.model.Action;
 import com.relino.core.model.ActionResult;
 import com.relino.core.model.Job;
 import com.relino.core.model.JobAttr;
-import com.relino.core.model.retry.IRetryPolicyManager;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
@@ -72,7 +71,7 @@ public class Main {
                 Job job = relino.jobFactory.builder(sayHelloActionId)
                         .idempotentId(timeMillis + "-" + (n++))                         // 幂等id
                         .maxExecuteCount(5)                                             // 最大重试次数
-                        .retryPolicy(IRetryPolicyManager.IMMEDIATELY_RETRY_POLICY)      // 重试策略
+                        .retryPolicy(Relino.IMMEDIATELY_RETRY_POLICY)      // 重试策略
                         .delayExecute(LocalDateTime.now().plusSeconds(10))              // 指定时间执行
                         .commonAttr(initAttr)                                           // 设置job属性
                         .build();
