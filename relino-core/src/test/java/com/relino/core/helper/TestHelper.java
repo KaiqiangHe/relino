@@ -1,10 +1,6 @@
 package com.relino.core.helper;
 
-import com.relino.core.JobFactory.JobBuilder;
-import com.relino.core.model.ActionManager;
 import com.relino.core.model.Job;
-import com.relino.core.model.JobAttr;
-import com.relino.core.model.retry.IRetryPolicyManager;
 import com.relino.core.support.db.DBExecutor;
 import com.relino.core.support.id.IdGenerator;
 import com.relino.core.support.id.UUIDIdGenerator;
@@ -24,8 +20,8 @@ public class TestHelper {
 
     public static void testBootStrap() {
 
-        ActionManager.register(LOG_ACTION_ID, new LogAction());
-        ActionManager.register(SleepAndLogAction_ID, new SleepAndLogAction());
+        /*ActionManager.register(LOG_ACTION_ID, new LogAction());
+        ActionManager.register(SleepAndLogAction_ID, new SleepAndLogAction());*/
     }
 
     public static DataSource getDataSource() {
@@ -46,14 +42,15 @@ public class TestHelper {
     }
 
     public static Job getJob(IdGenerator idGenerator, String actionId) {
-        JobAttr commonAttr = new JobAttr();
+        /*JobAttr commonAttr = new JobAttr();
         commonAttr.setString(LogAction.logValue, "hello-" + System.currentTimeMillis());
         Job job = new JobBuilder(idGenerator.getNext(), actionId)
                 .maxExecuteCount(10)
                 .retryPolicy(IRetryPolicyManager.IMMEDIATELY_RETRY_POLICY)
                 .delayExecute(100).commonAttr(commonAttr).build();
 
-        return job;
+        return job;*/
+        return null;
     }
 
     public static IdGenerator getIdGenerator() {

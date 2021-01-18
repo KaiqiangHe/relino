@@ -29,7 +29,8 @@ public class PessimisticLockExecuteQueueTest {
         idGenerator = new UUIDIdGenerator();
         DBExecutor dbExecutor = TestHelper.getDBExecutor();
         jobStore = new JobStore(dbExecutor);
-        executeQueue = new PessimisticLockExecuteQueue(dbExecutor);
+        // executeQueue = new PessimisticLockExecuteQueue(dbExecutor, jobConverter);
+        executeQueue = null;
 
         // 创建测试数据
         log.info("create mock data begin ... ");

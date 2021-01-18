@@ -2,9 +2,14 @@ package com.relino.core;
 
 import com.relino.core.exception.JobCreateException;
 import com.relino.core.exception.JobDuplicateException;
+import com.relino.core.exception.RelinoException;
+import com.relino.core.model.Action;
 import com.relino.core.model.Job;
 import com.relino.core.model.JobAttr;
 import com.relino.core.model.retry.IRetryPolicyManager;
+import com.relino.core.support.Utils;
+import com.relino.core.support.bean.BeanManager;
+import com.relino.core.support.bean.BeanWrapper;
 import com.relino.core.support.db.JobStore;
 import com.relino.core.support.id.IdGenerator;
 
@@ -17,10 +22,17 @@ public class JobFactory {
 
     private JobStore jobStore;
     private IdGenerator idGenerator;
+    private BeanManager<Action> actionBeanManager;
 
-    public JobFactory(JobStore jobStore, IdGenerator idGenerator) {
+    public JobFactory(JobStore jobStore, IdGenerator idGenerator, BeanManager<Action> actionBeanManager) {
+
+        Utils.checkNoNull(jobStore);
+        Utils.checkNoNull(idGenerator);
+        Utils.checkNoNull(actionBeanManager);
+
         this.jobStore = jobStore;
         this.idGenerator = idGenerator;
+        this.actionBeanManager = actionBeanManager;
     }
 
     /**
@@ -38,15 +50,22 @@ public class JobFactory {
     }
 
     public JobBuilder builder(String actionId) {
+
+        BeanWrapper<Action> action = actionBeanManager.getBeanWrapper(actionId);
+
+        if(action == null) {
+            throw new RelinoException("actionId=" + actionId + "不存在Action");
+        }
+
         String jobId = idGenerator.getNext();
-        return new JobBuilder(jobId, actionId);
+        return new JobBuilder(jobId, action);
     }
 
     public static class JobBuilder {
 
         private final String jobId;
         private String idempotentId;
-        private final String actionId;
+        private final BeanWrapper<Action> action;
 
         private String jobCode = Job.DEFAULT_JOB_CODE;
         private boolean delayJob = false;
@@ -56,10 +75,10 @@ public class JobFactory {
         private int maxExecuteCount = Job.Oper.DEFAULT_MAX_RETRY_COUNT;
         private String retryPolicyId = IRetryPolicyManager.DEFAULT_RETRY_POLICY;
 
-        public JobBuilder(String jobId, String actionId) {
+        public JobBuilder(String jobId, BeanWrapper<Action> action) {
             this.jobId = jobId;
             this.idempotentId = jobId;
-            this.actionId = actionId;
+            this.action = action;
         }
 
         public JobBuilder idempotentId(String idempotentId) {
@@ -127,8 +146,8 @@ public class JobFactory {
             return commonAttr;
         }
 
-        public String getActionId() {
-            return actionId;
+        public BeanWrapper<Action> getAction() {
+            return action;
         }
 
         public int getMaxExecuteCount() {

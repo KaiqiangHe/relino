@@ -2,6 +2,7 @@ package com.relino.core.model.executequeue;
 
 import com.relino.core.model.Job;
 import com.relino.core.model.JobStatus;
+import com.relino.core.model.ObjectConverter;
 import com.relino.core.model.db.JobEntity;
 import com.relino.core.support.JobUtils;
 import com.relino.core.support.Utils;
@@ -29,8 +30,10 @@ public class PessimisticLockExecuteQueue implements RunnableExecuteQueue {
     private DBExecutor dbExecutor;
     private KVStore kvStore;
     private DBPessimisticLock dbPessimisticLock;
+    private ObjectConverter<JobEntity, Job> jobConverter;
 
-    public PessimisticLockExecuteQueue(DBExecutor dbExecutor) {
+    public PessimisticLockExecuteQueue(DBExecutor dbExecutor, ObjectConverter<JobEntity, Job> jobConverter) {
+        this.jobConverter = jobConverter;
         Utils.checkNoNull(dbExecutor);
         this.dbExecutor = dbExecutor;
         kvStore = new KVStore(dbExecutor);
@@ -66,7 +69,7 @@ public class PessimisticLockExecuteQueue implements RunnableExecuteQueue {
                     if(Utils.isEmpty(rows)) {
                         return Collections.emptyList();
                     } else {
-                        return rows.stream().map(JobEntity::toJob).collect(Collectors.toList());
+                        return rows.stream().map(v -> jobConverter.convert(v)).collect(Collectors.toList());
                     }
                 }, null
         );

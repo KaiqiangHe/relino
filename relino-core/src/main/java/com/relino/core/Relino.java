@@ -2,13 +2,17 @@ package com.relino.core;
 
 import com.relino.core.config.LeaderSelectorConfig;
 import com.relino.core.config.RelinoConfig;
-import com.relino.core.model.ActionManager;
+import com.relino.core.model.Action;
 import com.relino.core.model.Job;
+import com.relino.core.model.JobConverter;
+import com.relino.core.model.ObjectConverter;
+import com.relino.core.model.db.JobEntity;
 import com.relino.core.model.executequeue.PessimisticLockExecuteQueue;
 import com.relino.core.model.executequeue.RunnableExecuteQueue;
 import com.relino.core.model.retry.IRetryPolicyManager;
 import com.relino.core.register.CuratorLeaderElection;
 import com.relino.core.register.RelinoLeaderElectionListener;
+import com.relino.core.support.bean.BeanManager;
 import com.relino.core.support.db.DBExecutor;
 import com.relino.core.support.db.JobStore;
 import com.relino.core.support.thread.QueueSizeLimitExecutor;
@@ -43,11 +47,16 @@ public class Relino {
     public final RunnableExecuteQueue runnableExecuteQueue;
     public final PullExecutableJobAndExecute pullExecutableJobAndExecute;
 
+    public final BeanManager<Action> actionManager = new BeanManager<>();
+
     public final CuratorFramework curatorClient;
     public final CuratorLeaderElection curatorLeaderElection;
 
     public Relino(RelinoConfig relinoConfig) {
         this.relinoConfig = relinoConfig;
+
+        // 注册Action
+        relinoConfig.getActionMap().forEach(actionManager::register);
 
         DataSource dataSource = relinoConfig.getDataSource();
         this.dbExecutor = new DBExecutor(dataSource);
@@ -61,7 +70,8 @@ public class Relino {
                 relinoConfig.getExecutorJobQueueSize(),
                 jobProcessor);
 
-        this.runnableExecuteQueue = new PessimisticLockExecuteQueue(dbExecutor);
+        ObjectConverter<JobEntity, Job> jobConverter = new JobConverter(actionManager);
+        this.runnableExecuteQueue = new PessimisticLockExecuteQueue(dbExecutor, jobConverter);
         this.pullExecutableJobAndExecute = new PullExecutableJobAndExecute(
                 this,
                 relinoConfig.getPullRunnableJobBatchSize(),
@@ -69,15 +79,12 @@ public class Relino {
                 runnableExecuteQueue,
                 jobExecutor);
 
-        this.jobFactory = new JobFactory(jobStore, relinoConfig.getIdGenerator());
+        this.jobFactory = new JobFactory(jobStore, relinoConfig.getIdGenerator(), actionManager);
 
         // 注册默认重试策略
         IRetryPolicyManager.registerDefault(relinoConfig.getDefaultRetryPolicy());
         // 注册自定义重试策略
         relinoConfig.getSelfRetryPolicy().forEach(IRetryPolicyManager::register);
-
-        // 注册Action
-        relinoConfig.getActionMap().forEach(ActionManager::register);
 
         // 主节点选取
         // 创建Curator Client

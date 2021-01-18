@@ -6,6 +6,7 @@ import com.relino.core.exception.RelinoException;
 import com.relino.core.model.retry.IRetryPolicy;
 import com.relino.core.model.retry.IRetryPolicyManager;
 import com.relino.core.support.Utils;
+import com.relino.core.support.bean.BeanWrapper;
 
 import java.time.LocalDateTime;
 
@@ -213,10 +214,7 @@ public class Job {
          */
         public static final int DEFAULT_MAX_RETRY_COUNT = 3;
 
-        /**
-         * actionId
-         */
-        private final String actionId;
+        private final BeanWrapper<Action> action;
 
         /**
          * 当前oper的状态
@@ -240,20 +238,18 @@ public class Job {
          */
         private final String retryPolicyId;
 
-        public Oper(String actionId, OperStatus operStatus, int executeCount, int maxExecuteCount, String retryPolicyId) {
+        public Oper(BeanWrapper<Action> action, OperStatus operStatus, int executeCount, int maxExecuteCount, String retryPolicyId) {
 
-            this.actionId = actionId;
+            this.action = action;
             this.operStatus = operStatus;
             this.executeCount = executeCount;
             this.maxExecuteCount = maxExecuteCount;
             this.retryPolicyId = retryPolicyId;
 
+            Utils.checkNoNull(this.action);
+
             if(this.maxExecuteCount < 1) {
                 throw new RelinoException("Parameter 'maxExecuteCount' should >=1, actual = " + this.maxExecuteCount);
-            }
-
-            if(!ActionManager.containsAction(this.actionId)) {
-                throw new RelinoException("actionId=" + this.actionId + "不存在Action");
             }
 
             if(!IRetryPolicyManager.containsIRetryAfter(this.retryPolicyId)) {
@@ -262,7 +258,7 @@ public class Job {
         }
 
         public Oper(JobBuilder builder) {
-            this(builder.getActionId(), OperStatus.UN_FINISHED, 0, builder.getMaxExecuteCount(), builder.getRetryPolicyId());
+            this(builder.getAction(), OperStatus.UN_FINISHED, 0, builder.getMaxExecuteCount(), builder.getRetryPolicyId());
         }
 
         /**
@@ -271,13 +267,9 @@ public class Job {
          * @return job not null, 执行结果
          */
         public ActionResult execute(String jobId, JobAttr commonAttr) {
-            Action action = ActionManager.getAction(actionId);
-            if(action == null) {
-                throw new RelinoException("Action不存在, actionId = " + actionId);
-            }
 
             executeCount ++;
-            ActionResult ret = action.execute(jobId, commonAttr, executeCount);
+            ActionResult ret = action.getBean().execute(jobId, commonAttr, executeCount);
 
             if(ret.isSuccess()) {
                 operStatus = OperStatus.SUCCESS_FINISHED;
@@ -313,10 +305,6 @@ public class Job {
             return operStatus == OperStatus.SUCCESS_FINISHED || operStatus == OperStatus.FAILED_FINISHED;
         }
 
-        public String getActionId() {
-            return actionId;
-        }
-
         public OperStatus getOperStatus() {
             return operStatus;
         }
@@ -331,6 +319,10 @@ public class Job {
 
         public String getRetryPolicyId() {
             return retryPolicyId;
+        }
+
+        public BeanWrapper<Action> getAction() {
+            return action;
         }
     }
 }

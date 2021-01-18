@@ -37,7 +37,7 @@ public class JobStore {
         Object[] params = new Object[] {
                 job.getJobId(), job.getIdempotentId(), job.getJobCode(), job.getJobStatus().getCode(), job.isDelayJob(), job.getBeginTime(),
                 job.getCommonAttr().asString(), job.getWillExecuteTime(), job.getExecuteOrder(),
-                mOper.getActionId(), mOper.getOperStatus().getCode(), mOper.getExecuteCount(), mOper.getRetryPolicyId(), mOper.getMaxExecuteCount()
+                mOper.getAction().getBeanId(), mOper.getOperStatus().getCode(), mOper.getExecuteCount(), mOper.getRetryPolicyId(), mOper.getMaxExecuteCount()
         };
 
         return dbExecutor.execute(INSERT_JOB_SQL, params);
