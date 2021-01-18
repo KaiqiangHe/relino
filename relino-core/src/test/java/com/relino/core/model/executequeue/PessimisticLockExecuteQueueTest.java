@@ -1,9 +1,10 @@
 package com.relino.core.model.executequeue;
 
 import com.relino.core.helper.TestHelper;
-import com.relino.core.db.Store;
 import com.relino.core.model.Job;
 import com.relino.core.model.JobStatus;
+import com.relino.core.support.db.DBExecutor;
+import com.relino.core.support.db.JobStore;
 import com.relino.core.support.id.IdGenerator;
 import com.relino.core.support.id.UUIDIdGenerator;
 import org.junit.Before;
@@ -18,23 +19,25 @@ public class PessimisticLockExecuteQueueTest {
 
     private static final Logger log = LoggerFactory.getLogger(PessimisticLockExecuteQueueTest.class);
 
-    private ExecuteQueue executeQueue;
-    private Store store;
+    private RunnableExecuteQueue executeQueue;
+    private JobStore jobStore;
     private IdGenerator idGenerator;
 
     @Before
     public void setUp() throws Exception {
         TestHelper.testBootStrap();
         idGenerator = new UUIDIdGenerator();
-        store = TestHelper.getStore();
-        executeQueue = new PessimisticLockExecuteQueue(store);
+        DBExecutor dbExecutor = TestHelper.getDBExecutor();
+        jobStore = new JobStore(dbExecutor);
+        // executeQueue = new PessimisticLockExecuteQueue(dbExecutor, jobConverter);
+        executeQueue = null;
 
         // 创建测试数据
         log.info("create mock data begin ... ");
         for (int i = 0; i < 1000; i++) {
             Job job = TestHelper.getJob(idGenerator, TestHelper.LOG_ACTION_ID);
             job.setJobStatus(JobStatus.RUNNABLE);
-            store.insertJob(job);
+            jobStore.insertNew(job);
         }
         log.info("create mock data end ... ");
     }
@@ -43,7 +46,7 @@ public class PessimisticLockExecuteQueueTest {
     public void launch() throws Exception {
 
         while(true) {
-            List<Job> nextExecutableJob = executeQueue.getNextExecutableJob(20);
+            List<Job> nextExecutableJob = executeQueue.getNextRunnableJob(20);
             if(nextExecutableJob.isEmpty()) {
                 break;
             }

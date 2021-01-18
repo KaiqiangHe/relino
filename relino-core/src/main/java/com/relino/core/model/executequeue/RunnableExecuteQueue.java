@@ -9,13 +9,13 @@ import java.util.List;
  *
  * @author kaiqiang.he
  */
-public interface ExecuteQueue {
+public interface RunnableExecuteQueue {
 
-    /**ExecuteQueue
+    /**
      * 获取下一批可执行的Job
      *
      * @param batchSize > 0
      * @return not null, may be empty
      */
-    List<Job> getNextExecutableJob(int batchSize) throws Exception;
+    List<Job> getNextRunnableJob(int batchSize) throws Exception;
 }

@@ -4,6 +4,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.format.DateTimeFormatter;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.function.Predicate;
 
 /**
@@ -70,8 +71,54 @@ public class Utils {
             throw new IllegalArgumentException();
         }
     }
+    public static void checkNoNull(Object param) {
+        if(param == null) {
+            throw new IllegalArgumentException("参数不能为null");
+        }
+    }
+    public static void checkNoNull(Object param, String message) {
+        if(param == null) {
+            throw new IllegalArgumentException(message);
+        }
+    }
     public static void checkNonEmpty(String str) {
         if (isEmpty(str))
             throw new NullPointerException();
+    }
+
+    // --------------------------------------------------------------------------------
+    private static final int maxCacheN = 500;
+    private static final Map<Integer, String> nQuestionMarkCaches = new ConcurrentHashMap<>();
+    /**
+     * 返回n个?, 格式如：(?, ?, ... )
+     */
+    public static String getNQuestionMark(int n) {
+        if(n <= maxCacheN) {
+            String value = nQuestionMarkCaches.get(n);
+            if(value == null) {
+                value = generateNQuestionMark(n);
+                nQuestionMarkCaches.put(n, value);
+            }
+            return value;
+        } else {
+            return generateNQuestionMark(n);
+        }
+    }
+    public static String generateNQuestionMark(int n) {
+        if(n <= 0) {
+            throw new IllegalArgumentException("参数n应大于0, n = " + n);
+        }
+
+        if(n == 1) {
+            return "(?)";
+        }
+
+        StringBuilder sb = new StringBuilder();
+        sb.append("(?");
+        for (int i = 0; i < n - 1; i++) {
+            sb.append(",?");
+        }
+        sb.append(")");
+        return sb.toString();
     }
 }

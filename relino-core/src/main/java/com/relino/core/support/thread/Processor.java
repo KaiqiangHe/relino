@@ -3,8 +3,8 @@ package com.relino.core.support.thread;
 /**
  * @author kaiqiang.he
  */
-public interface Processor {
+public interface Processor<P> {
 
-    void process();
+    void process(P param);
 
 }

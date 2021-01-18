@@ -49,10 +49,7 @@ CREATE TABLE kv
 ) ENGINE = INNODB
   DEFAULT CHARSET = utf8mb4;
 
-insert into kv(k, v) value ('execute_queue_cursor', '-1');
-insert into kv(k, v) value ('execute_order', '1');
-insert into kv(k, v) value ('dead_job_watch_dog', '-1');
-
+/* todo 类似于日志表 */
 drop table if exists execute_time;
 CREATE TABLE execute_time
 (
@@ -65,4 +62,27 @@ CREATE TABLE execute_time
 
 ) ENGINE = INNODB
   DEFAULT CHARSET = utf8mb4;
+
+drop table if exists pessimistic_lock;
+CREATE TABLE pessimistic_lock
+(
+    lock_key char(64) NOT NULL COMMENT 'lock_key',
+
+    primary key (lock_key)
+
+) ENGINE = INNODB
+  DEFAULT CHARSET = utf8mb4;
+
+
+/* todo 简化k长度 */
+
+insert into kv(k, v) value ('execute_queue_cursor', '-1');
+insert into kv(k, v) value ('execute_order', '1');
+insert into kv(k, v) value ('dead_job_watch_dog', '-1');
+
+insert into pessimistic_lock(lock_key) value ('execute_queue_cursor');
+insert into pessimistic_lock(lock_key) value ('execute_order');
+insert into pessimistic_lock(lock_key) value ('dead_job_watch_dog');
+
+
 

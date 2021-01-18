@@ -1,4 +1,4 @@
-package com.relino.core.db;
+package com.relino.core.support.db;
 
 /**
  * @author kaiqiang.he
