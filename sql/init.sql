@@ -1,5 +1,4 @@
-create database relino;
-use relino;
+
 
 drop table if exists job;
 CREATE TABLE job
@@ -72,9 +71,6 @@ CREATE TABLE pessimistic_lock
 
 ) ENGINE = INNODB
   DEFAULT CHARSET = utf8mb4;
-
-
-/* todo 简化k长度 */
 
 insert into kv(k, v) value ('execute_queue_cursor', '-1');
 insert into kv(k, v) value ('execute_order', '1');
