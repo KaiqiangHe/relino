@@ -11,10 +11,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import java.util.List;
-import java.util.concurrent.Executors;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.ScheduledFuture;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
@@ -27,11 +24,12 @@ public final class PullExecutableJobAndExecute {
     private static final Logger log = LoggerFactory.getLogger(PullExecutableJobAndExecute.class);
 
     private final ScheduledExecutorService watchExecutor =
-            Executors.newScheduledThreadPool(1, new NamedThreadFactory("DeadJobWatchDog", true));
-    private final ScheduledFuture<?> watchFuture;
+            Executors.newScheduledThreadPool(1, new NamedThreadFactory("relino-dead-job-watchdog", true));
+    private ScheduledFuture<?> watchFuture;
 
     private Relino relino;
     private int pullSize;
+    private int watchPerSeconds;
     private final RunnableExecuteQueue executeQueue;
     private final QueueSizeLimitExecutor<Job> executor;
 
@@ -47,9 +45,12 @@ public final class PullExecutableJobAndExecute {
 
         this.relino = relino;
         this.pullSize = pullSize;
+        this.watchPerSeconds = watchPerSeconds;
         this.executeQueue = executeQueue;
         this.executor = executor;
+    }
 
+    public void start() {
         watchFuture = watchExecutor.scheduleAtFixedRate(() -> {
             log.info("PullExecutableJobAndExecute开始运行");
             try {
@@ -58,7 +59,7 @@ public final class PullExecutableJobAndExecute {
                 HandleException.handleUnExpectedException(t);
             }
             log.info("PullExecutableJobAndExecute运行结束");
-        }, 0, watchPerSeconds, TimeUnit.SECONDS);
+        }, 0, this.watchPerSeconds, TimeUnit.SECONDS);
     }
 
     protected void pullJob() throws Exception {
@@ -73,12 +74,19 @@ public final class PullExecutableJobAndExecute {
                     index++;
                 }
             }
+
             jobs = executeQueue.getNextRunnableJob(pullSize);
         }
         if(log.isDebugEnabled()) {
             log.debug("pull job ids = [{}], time = {}",
                     jobs.stream().map(Job::getJobId).collect(Collectors.joining(",")),
                     System.currentTimeMillis() - start);
+        }
+    }
+
+    public void destroy() {
+        if(watchFuture != null && !watchFuture.isCancelled()) {
+            watchFuture.cancel(false);
         }
     }
 }

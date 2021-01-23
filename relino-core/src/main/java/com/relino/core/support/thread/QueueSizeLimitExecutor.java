@@ -9,6 +9,7 @@ import java.util.concurrent.ArrayBlockingQueue;
 import java.util.concurrent.BlockingQueue;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 /**
  * 通过BlockingQueue实现生产者消费者模型，避免添加的速度过快
@@ -20,6 +21,8 @@ public class QueueSizeLimitExecutor<T> implements Runnable {
     private static final Logger log = LoggerFactory.getLogger(QueueSizeLimitExecutor.class);
     
     private static final int DEFAULT_QUEUE_SIZE = 1000;
+
+    private AtomicBoolean isStop = new AtomicBoolean(false);
 
     private final String name;
     private final int coreThread;
@@ -66,6 +69,11 @@ public class QueueSizeLimitExecutor<T> implements Runnable {
     }
 
     public boolean addItem(T job) {
+
+        if(isStop.get()) {
+            throw new IllegalStateException("调用shutdown()之后不可以再添加任务");
+        }
+
         boolean offered = queue.offer(job);
         if(offered) {
             workers.execute(this);
@@ -74,6 +82,11 @@ public class QueueSizeLimitExecutor<T> implements Runnable {
     }
 
     public boolean addItem(T job, long timeout, TimeUnit unit) throws InterruptedException {
+
+        if(isStop.get()) {
+            throw new IllegalStateException("调用shutdown()之后不可以再添加任务");
+        }
+
         boolean offered = queue.offer(job, timeout, unit);
         if(offered) {
             workers.execute(this);
@@ -94,6 +107,19 @@ public class QueueSizeLimitExecutor<T> implements Runnable {
             }
         } catch (Throwable t) {
             HandleException.handleUnExpectedException(t);
+        }
+    }
+
+    public void shutdown() {
+        if(isStop.compareAndSet(false, true)) {
+            try {
+                workers.shutdown();
+
+                // 等待10秒
+                workers.awaitTermination(10, TimeUnit.SECONDS);
+            } catch (InterruptedException e) {
+                // ignore
+            }
         }
     }
 }

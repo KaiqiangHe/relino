@@ -1,9 +1,8 @@
 package com.relino.core.support;
 
+import com.relino.core.exception.HandleException;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.sql.SQLException;
 
 /**
  * 1. 通过共享变量的方式结束
@@ -72,7 +71,7 @@ public abstract class AbstractRunSupport implements RunSupport {
         try {
             execute0();
         } catch (Exception e) {
-            log.error("执行异常 ", e);
+            HandleException.handleUnExpectedException(e);   // TODO: 2021/1/20
         } finally {
             synchronized (statusChangeLock) {
                 status = Status.STOP;
@@ -85,5 +84,5 @@ public abstract class AbstractRunSupport implements RunSupport {
         return status == Status.STOP_PRE;
     }
 
-    protected abstract void execute0() throws SQLException;
+    protected abstract void execute0() throws Exception;
 }

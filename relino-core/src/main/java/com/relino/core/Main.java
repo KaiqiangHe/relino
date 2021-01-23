@@ -60,16 +60,17 @@ public class Main {
 
         Relino relino = new Relino(relinoConfig);
 
+        relino.start();
         long timeMillis = System.currentTimeMillis();
         int n = 0;
-        while (true) {
+        while (n < 1000) {
             try {
 
                 JobAttr initAttr = new JobAttr();
                 initAttr.setString("userId", "orange" + System.currentTimeMillis());
 
                 Job job = relino.jobFactory.builder(sayHelloActionId)
-                        .idempotentId(timeMillis + "-" + (n++))                         // 幂等id
+                        .idempotentId(timeMillis + "-" + (n))                         // 幂等id
                         .maxExecuteCount(5)                                             // 最大重试次数
                         .retryPolicy(Relino.IMMEDIATELY_RETRY_POLICY)      // 重试策略
                         .delayExecute(LocalDateTime.now().plusSeconds(10))              // 指定时间执行
@@ -79,11 +80,16 @@ public class Main {
                 relino.jobFactory.createJob(job);
 
                 log.info("create job success, jobId = {}", job.getJobId());
-                Thread.sleep(50);
+                Thread.sleep(5);
+
+                n++;
             } catch (Exception e) {
                 log.error("create job error ", e);
             }
         }
+
+        relino.shutdown();
+        // TODO: 2021/1/21  zk 主节点选取为结束
     }
 
     static class SayHello implements Action {

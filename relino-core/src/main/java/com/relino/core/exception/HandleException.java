@@ -20,6 +20,10 @@ public class HandleException {
         handleUnExpectedException(t, null);
     }
 
+    public static void handleThreadInterruptedException(InterruptedException e) {
+        log.error("InterruptedException error occur ", e);
+    }
+
     /**
      * 处理不预期的异常
      */

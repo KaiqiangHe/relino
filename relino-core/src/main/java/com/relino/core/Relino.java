@@ -24,6 +24,8 @@ import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
 import org.apache.curator.retry.RetryNTimes;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.util.List;
@@ -34,6 +36,8 @@ import java.util.stream.Collectors;
  */
 public class Relino {
 
+    private static final Logger log = LoggerFactory.getLogger(Relino.class);
+
     private static final int SESSION_TIMEOUT = 30 * 1000;
     private static final int CONNECTION_TIMEOUT = 3 * 1000;
     private static final int DEFAULT_WATCH_DOG_PER_SECOND = 1;
@@ -41,33 +45,27 @@ public class Relino {
     public static final String DEFAULT_RETRY_POLICY = "_df";
     public static final String IMMEDIATELY_RETRY_POLICY = "_im";
 
-    public final RelinoConfig relinoConfig;
+    private final RelinoConfig relinoConfig;
 
     public final DBExecutor dbExecutor;
-    public final JobStore jobStore;
+    private final JobStore jobStore;
     public final JobFactory jobFactory;
-    public final QueueSizeLimitExecutor<Job> jobExecutor;
-    public final JobProcessor jobProcessor;
-    public final RunnableExecuteQueue runnableExecuteQueue;
-    public final PullExecutableJobAndExecute pullExecutableJobAndExecute;
+    private final QueueSizeLimitExecutor<Job> jobExecutor;
+    private final JobProcessor jobProcessor;
+    private final RunnableExecuteQueue runnableExecuteQueue;
+    private final PullExecutableJobAndExecute pullExecutableJobAndExecute;
 
-    public final BeanManager<Action> actionManager = new BeanManager<>();
-    public final BeanManager<IRetryPolicy> retryPolicyBeanManager = new BeanManager<>();
+    private final BeanManager<Action> actionManager = new BeanManager<>();
+    private final BeanManager<IRetryPolicy> retryPolicyBeanManager = new BeanManager<>();
 
-    public final CuratorFramework curatorClient;
-    public final CuratorLeaderElection curatorLeaderElection;
+    // zk
+    private final CuratorFramework curatorClient;
+    private final CuratorLeaderElection curatorLeaderElection;
 
     public Relino(RelinoConfig relinoConfig) {
         this.relinoConfig = relinoConfig;
 
-        // 注册Action
-        relinoConfig.getActionMap().forEach(actionManager::register);
-
-        // 注册默认重试策略
-        retryPolicyBeanManager.register(DEFAULT_RETRY_POLICY, relinoConfig.getDefaultRetryPolicy());
-        retryPolicyBeanManager.register(IMMEDIATELY_RETRY_POLICY, new ImmediatelyRetryPolicy());
-        // 注册自定义重试策略
-        relinoConfig.getSelfRetryPolicy().forEach(retryPolicyBeanManager::register);
+        registerActionAndRetryPolicy();
 
         DataSource dataSource = relinoConfig.getDataSource();
         this.dbExecutor = new DBExecutor(dataSource);
@@ -90,28 +88,59 @@ public class Relino {
                 runnableExecuteQueue,
                 jobExecutor);
 
+        // 创建jobFactory
         this.jobFactory = new JobFactory(jobStore, relinoConfig.getIdGenerator(), actionManager, retryPolicyBeanManager);
 
-        // 主节点选取
         // 创建Curator Client
         RetryPolicy retryPolicy = new RetryNTimes(10, 100);
         curatorClient = CuratorFrameworkFactory.newClient(
                 relinoConfig.getZkConnectStr(), SESSION_TIMEOUT, CONNECTION_TIMEOUT, retryPolicy);
-        curatorClient.start();
-
+        // 主节点选取
         relinoConfig.registerLeaderSelector(new LeaderSelectorConfig("scanRunnableDelayJob",
                 "/relino/scanRunnableDelayJob",
-                () -> new ScanRunnableDelayJob(dbExecutor, relinoConfig.getScanRunnableJobBatchSize())));
-
+                () -> new ScanRunnableDelayJob(dbExecutor, relinoConfig.getScanRunnableJobBatchSize()))
+        );
         relinoConfig.registerLeaderSelector(
                 new LeaderSelectorConfig("deadJobWatchDog",
                         "/relino/deadJobWatchDog",
                         () -> new DeadJobWatchDog(dbExecutor, relinoConfig.getWatchDogTimeOutMinutes()))
-
         );
         List<RelinoLeaderElectionListener> electionListenerList =
                 relinoConfig.getLeaderSelectorConfigList().stream().map(RelinoLeaderElectionListener::new).collect(Collectors.toList());
         curatorLeaderElection = new CuratorLeaderElection(electionListenerList, curatorClient);
+    }
+
+    public void start() {
+        this.pullExecutableJobAndExecute.start();
+        curatorClient.start();
         curatorLeaderElection.execute();
+    }
+
+    /**
+     * destroy
+     * shutdown
+     * close
+     * 区别
+     */
+    public void shutdown() {
+        try {
+            pullExecutableJobAndExecute.destroy();
+            jobExecutor.shutdown();
+            curatorLeaderElection.shutdown();
+            curatorClient.close();
+        } catch (Exception e) {
+            log.error("结束Relino异常", e);
+        }
+    }
+
+    private void registerActionAndRetryPolicy() {
+        // 注册Action
+        relinoConfig.getActionMap().forEach(actionManager::register);
+
+        // 注册默认重试策略
+        retryPolicyBeanManager.register(DEFAULT_RETRY_POLICY, relinoConfig.getDefaultRetryPolicy());
+        retryPolicyBeanManager.register(IMMEDIATELY_RETRY_POLICY, new ImmediatelyRetryPolicy());
+        // 注册自定义重试策略
+        relinoConfig.getSelfRetryPolicy().forEach(retryPolicyBeanManager::register);
     }
 }

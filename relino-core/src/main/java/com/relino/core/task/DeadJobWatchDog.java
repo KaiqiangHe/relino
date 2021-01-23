@@ -57,7 +57,7 @@ public class DeadJobWatchDog extends AbstractRunSupport implements ElectionCandi
     }
 
     @Override
-    protected void execute0() {
+    protected void execute0() throws InterruptedException {
         log.info("DeadJobWatchDog开始运行");
         while (true) {
 
@@ -76,11 +76,7 @@ public class DeadJobWatchDog extends AbstractRunSupport implements ElectionCandi
              * 如果doScan()操作异常，这里一定要Sleep
              */
             if(sleep) {
-                try {
-                    Thread.sleep(10000);
-                } catch (Throwable t) {
-                    HandleException.handleUnExpectedException(t);
-                }
+                Thread.sleep(10000);
             }
         }
         log.info("DeadJobWatchDog运行结束");

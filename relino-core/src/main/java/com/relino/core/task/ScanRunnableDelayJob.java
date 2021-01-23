@@ -55,7 +55,7 @@ public final class ScanRunnableDelayJob extends AbstractRunSupport implements El
     }
 
     @Override
-    protected void execute0() {
+    protected void execute0() throws InterruptedException {
         log.info("ScanRunnableDelayJob开始运行");
         while (true) {
 
@@ -74,11 +74,7 @@ public final class ScanRunnableDelayJob extends AbstractRunSupport implements El
              * 如果doScan()操作异常，这里一定要Sleep
              */
             if(sleep) {
-                try {
-                    Thread.sleep(500);
-                } catch (Throwable t) {
-                    HandleException.handleUnExpectedException(t);
-                }
+                Thread.sleep(500);
             }
         }
         log.info("ScanRunnableDelayJob运行结束");

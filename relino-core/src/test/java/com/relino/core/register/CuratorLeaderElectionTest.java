@@ -82,11 +82,6 @@ public class CuratorLeaderElectionTest {
                 }
             }
         }
-
-        @Override
-        public void destroy() {
-            // do nothing.
-        }
     }
 
 }

@@ -24,9 +24,4 @@ public interface RunSupport {
      * 同步结束当前线程
      */
     void terminal();
-
-    /**
-     * 销毁
-     */
-    default void destroy() {}
 }
