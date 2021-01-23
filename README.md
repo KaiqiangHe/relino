@@ -79,6 +79,25 @@ jobFactory.createJob(job);
 relino.shutdown();
 ```
 
+### 配置介绍
+
+参考`RelinoConfig`类
+
+| 设置名                   | 默认值                                                       | 说明                                                         |
+| :----------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
+| appId                    | 无，需指定                                                   | 应用唯一id                                                   |
+| zkConnectStr             | 无，需指定                                                   | zk地址，组件使用zookeeper作为注册中心                        |
+| dataSource               | 无，需指定                                                   | DataSource 数据源                                            |
+| executorJobCoreThreadNum | 5                                                            | 执行Job核心线程数                                            |
+| executorJobMaxThreadNum  | 20                                                           | 执行Job最大线程数                                            |
+| executorJobQueueSize     | 2000                                                         | 缓存将要执行Job的队列大小                                    |
+| idGenerator              | `UUIDIdGenerator`                                            | `jobId`生成器                                                |
+| actionMap                | 无，需自行注册                                               | 注册的`Action`，可以通过`registerAction(String actionId, Action action)`注册 |
+| selfRetryPolicy          | 默认一注册了`ImmediatelyRetryPolicy` 立即重试，为`Relino#IMMEDIATELY_RETRY_POLICY` | 自定义重试策略，可通过`registerRetryPolicy(String retryPolicyId, IRetryPolicy retry)`注册自定义重试策略。 |
+| defaultRetryPolicy       | `LinearRetryPolicy` - 重试时间线性增长策略，为5乘以已执行的次数，为5 10 15 20 ... | 默认的重试策略，为`Relino#DEFAULT_RETRY_POLICY`常量          |
+
+
+
 ## RoadMap
 
 ## TODO

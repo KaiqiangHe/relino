@@ -32,11 +32,13 @@ public class RelinoConfig {
     // 执行job配置
     private int executorJobCoreThreadNum = 5;
     private int executorJobMaxThreadNum = 20;
-    private int executorJobQueueSize = 3000;
+    private int executorJobQueueSize = 2000;
 
     private int pullRunnableJobBatchSize = 200;
     private int scanRunnableJobBatchSize = 200;
     private int watchDogTimeOutMinutes = 5;
+
+    private IdGenerator idGenerator = new UUIDIdGenerator();
 
     // 默认重试策略
     private IRetryPolicy defaultRetryPolicy = new LinearRetryPolicy(DEFAULT_RETRY_K);
@@ -46,8 +48,6 @@ public class RelinoConfig {
 
     // Action
     private Map<String, Action> actionMap = new HashMap<>();
-
-    private IdGenerator idGenerator = new UUIDIdGenerator();
 
     public RelinoConfig(String appId, String zkConnectStr, DataSource dataSource) {
 
