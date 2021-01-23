@@ -1,6 +1,6 @@
 package com.relino.core.model;
 
-import com.relino.core.JobFactory.JobBuilder;
+import com.relino.core.JobBuilder;
 import com.relino.core.Relino;
 import com.relino.core.exception.RelinoException;
 import com.relino.core.model.retry.IRetryPolicy;
