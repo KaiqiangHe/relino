@@ -5,6 +5,7 @@ import com.relino.core.model.Action;
 import com.relino.core.model.ActionResult;
 import com.relino.core.model.Job;
 import com.relino.core.model.JobAttr;
+import com.relino.core.task.JobFactory;
 import com.zaxxer.hikari.HikariConfig;
 import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
@@ -59,8 +60,10 @@ public class Main {
         relinoConfig.registerAction(sayHelloActionId, new SayHello());
 
         Relino relino = new Relino(relinoConfig);
-
         relino.start();
+
+        JobFactory jobFactory = relino.getJobFactory();
+
         long timeMillis = System.currentTimeMillis();
         int n = 0;
         while (n < 1000) {
@@ -69,15 +72,15 @@ public class Main {
                 JobAttr initAttr = new JobAttr();
                 initAttr.setString("userId", "orange" + System.currentTimeMillis());
 
-                Job job = relino.jobFactory.builder(sayHelloActionId)
-                        .idempotentId(timeMillis + "-" + (n))                         // 幂等id
+                Job job = jobFactory.builder(sayHelloActionId)
+                        .idempotentId(timeMillis + "-" + (n))                           // 幂等id
                         .maxExecuteCount(5)                                             // 最大重试次数
-                        .retryPolicy(Relino.IMMEDIATELY_RETRY_POLICY)      // 重试策略
+                        .retryPolicy(Relino.IMMEDIATELY_RETRY_POLICY)                   // 重试策略
                         .delayExecute(LocalDateTime.now().plusSeconds(10))              // 指定时间执行
                         .commonAttr(initAttr)                                           // 设置job属性
                         .build();
 
-                relino.jobFactory.createJob(job);
+                jobFactory.createJob(job);
 
                 log.info("create job success, jobId = {}", job.getJobId());
                 Thread.sleep(5);
@@ -89,7 +92,6 @@ public class Main {
         }
 
         relino.shutdown();
-        // TODO: 2021/1/21  zk 主节点选取为结束
     }
 
     static class SayHello implements Action {

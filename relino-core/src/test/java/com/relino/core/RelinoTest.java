@@ -6,6 +6,7 @@ import com.relino.core.model.Job;
 import com.relino.core.model.JobAttr;
 import com.relino.core.support.db.DBExecutor;
 import com.relino.core.task.DeadJobWatchDog;
+import com.relino.core.task.JobFactory;
 import org.junit.Before;
 import org.junit.Test;
 import org.slf4j.Logger;
@@ -33,7 +34,7 @@ public class RelinoTest {
     @Test
     public void test() throws InterruptedException, IOException {
         // 一个线程不断提交job
-        JobFactory jobProducer = app.jobFactory;
+        JobFactory jobProducer = app.getJobFactory();
 
         for (int i = 0; i < 50; i++) {
             new Thread(() -> {

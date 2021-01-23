@@ -18,6 +18,7 @@ import com.relino.core.support.db.DBExecutor;
 import com.relino.core.support.db.JobStore;
 import com.relino.core.support.thread.QueueSizeLimitExecutor;
 import com.relino.core.task.DeadJobWatchDog;
+import com.relino.core.task.JobFactory;
 import com.relino.core.task.PullExecutableJobAndExecute;
 import com.relino.core.task.ScanRunnableDelayJob;
 import org.apache.curator.RetryPolicy;
@@ -49,7 +50,7 @@ public class Relino {
 
     public final DBExecutor dbExecutor;
     private final JobStore jobStore;
-    public final JobFactory jobFactory;
+    private final JobFactory jobFactory;
     private final QueueSizeLimitExecutor<Job> jobExecutor;
     private final JobProcessor jobProcessor;
     private final RunnableExecuteQueue runnableExecuteQueue;
@@ -89,7 +90,7 @@ public class Relino {
                 jobExecutor);
 
         // 创建jobFactory
-        this.jobFactory = new JobFactory(jobStore, relinoConfig.getIdGenerator(), actionManager, retryPolicyBeanManager);
+        this.jobFactory = new DefaultJobFactory(jobStore, relinoConfig.getIdGenerator(), actionManager, retryPolicyBeanManager);
 
         // 创建Curator Client
         RetryPolicy retryPolicy = new RetryNTimes(10, 100);
@@ -131,6 +132,10 @@ public class Relino {
         } catch (Exception e) {
             log.error("结束Relino异常", e);
         }
+    }
+
+    public JobFactory getJobFactory() {
+        return jobFactory;
     }
 
     private void registerActionAndRetryPolicy() {

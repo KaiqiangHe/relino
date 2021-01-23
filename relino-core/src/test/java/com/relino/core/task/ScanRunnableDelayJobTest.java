@@ -1,6 +1,6 @@
 package com.relino.core.task;
 
-import com.relino.core.JobFactory;
+import com.relino.core.DefaultJobFactory;
 import com.relino.core.Relino;
 import com.relino.core.helper.TestHelper;
 import com.relino.core.model.Job;
@@ -13,7 +13,7 @@ import java.util.concurrent.ThreadLocalRandom;
 
 public class ScanRunnableDelayJobTest {
 
-    private JobFactory jobProducer;
+    private DefaultJobFactory jobProducer;
     private ScanRunnableDelayJob scanRunnableDelayJob;
 
     @Before

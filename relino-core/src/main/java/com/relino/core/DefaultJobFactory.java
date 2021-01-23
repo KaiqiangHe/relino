@@ -9,19 +9,20 @@ import com.relino.core.support.Utils;
 import com.relino.core.support.bean.BeanManager;
 import com.relino.core.support.db.JobStore;
 import com.relino.core.support.id.IdGenerator;
+import com.relino.core.task.JobFactory;
 
 /**
  * @author kaiqiang.he
  */
-public class JobFactory {
+public class DefaultJobFactory implements JobFactory {
 
     private JobStore jobStore;
     private IdGenerator idGenerator;
     private BeanManager<Action> actionBeanManager;
     private BeanManager<IRetryPolicy> retryPolicyBeanManager;
 
-    public JobFactory(JobStore jobStore, IdGenerator idGenerator,
-                      BeanManager<Action> actionBeanManager, BeanManager<IRetryPolicy> retryPolicyBeanManager) {
+    public DefaultJobFactory(JobStore jobStore, IdGenerator idGenerator,
+                             BeanManager<Action> actionBeanManager, BeanManager<IRetryPolicy> retryPolicyBeanManager) {
         this.retryPolicyBeanManager = retryPolicyBeanManager;
 
         Utils.checkNoNull(jobStore);
@@ -33,12 +34,7 @@ public class JobFactory {
         this.actionBeanManager = actionBeanManager;
     }
 
-    /**
-     * 创建一个job
-     *
-     * @throws JobCreateException
-     * @throws JobDuplicateException
-     */
+    @Override
     public void createJob(Job job) throws JobCreateException, JobDuplicateException {
         try {
             jobStore.insertNew(job);
@@ -47,6 +43,7 @@ public class JobFactory {
         }
     }
 
+    @Override
     public JobBuilder builder(String actionId) {
         String jobId = idGenerator.getNext();
         return new JobBuilder(jobId, actionId, actionBeanManager, retryPolicyBeanManager);
