@@ -86,12 +86,12 @@ relino.shutdown();
 | 设置名                   | 默认值                                                       | 说明                                                         |
 | :----------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | appId                    | 无，需指定                                                   | 应用唯一id                                                   |
-| zkConnectStr             | 无，需指定                                                   | zk地址，组件使用zookeeper作为注册中心                        |
+| zkConnectStr             | 无，需指定                                                   | 使用zookeeper作为注册中心，该属性为连接地址，如果为单机模式如`127.0.0.1:2181`；集群模式如`127.0.0.1:2181,127.0.0.2:2181,127.0.0.3:2181` |
 | dataSource               | 无，需指定                                                   | DataSource 数据源                                            |
 | executorJobCoreThreadNum | 5                                                            | 执行Job核心线程数                                            |
 | executorJobMaxThreadNum  | 20                                                           | 执行Job最大线程数                                            |
 | executorJobQueueSize     | 2000                                                         | 缓存将要执行Job的队列大小                                    |
-| idGenerator              | `UUIDIdGenerator`                                            | `jobId`生成器                                                |
+| idGenerator              | 默认为`TimeHostPidIdGenerator`，基于当前时间、本地ip、进程pid生成 | `jobId`生成器，目前有`TimeHostPidIdGenerator`和`UUIDIdGenerator`两种，可实现`<<IdGenerator>>` 接口，通过`setIdGenerator()`来指定id生成器。 |
 | actionMap                | 无，需自行注册                                               | 注册的`Action`，可以通过`registerAction(String actionId, Action action)`注册 |
 | selfRetryPolicy          | 默认一注册了`ImmediatelyRetryPolicy` 立即重试，为`Relino#IMMEDIATELY_RETRY_POLICY` | 自定义重试策略，可通过`registerRetryPolicy(String retryPolicyId, IRetryPolicy retry)`注册自定义重试策略。 |
 | defaultRetryPolicy       | `LinearRetryPolicy` - 重试时间线性增长策略，为5乘以已执行的次数，为5 10 15 20 ... | 默认的重试策略，为`Relino#DEFAULT_RETRY_POLICY`常量          |

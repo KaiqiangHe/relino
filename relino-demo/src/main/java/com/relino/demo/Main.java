@@ -1,5 +1,20 @@
 package com.relino.demo;
 
+import com.relino.core.Relino;
+import com.relino.core.config.RelinoConfig;
+import com.relino.core.model.Action;
+import com.relino.core.model.ActionResult;
+import com.relino.core.model.Job;
+import com.relino.core.model.JobAttr;
+import com.relino.core.task.JobFactory;
+import com.zaxxer.hikari.HikariConfig;
+import com.zaxxer.hikari.HikariDataSource;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import javax.sql.DataSource;
+import java.time.LocalDateTime;
+
 /**
  * RoadMap:
  * 1. 考虑系统整体设计，细化Job模型职责，完善job execute方法，完善用户使用API，可以用UML类图的形式描述
@@ -22,7 +37,7 @@ package com.relino.demo;
  */
 public class Main {
 
-    /*private static final Logger log = LoggerFactory.getLogger(Main.class);
+    private static final Logger log = LoggerFactory.getLogger(Main.class);
 
     public static void main(String[] args) {
 
@@ -43,7 +58,7 @@ public class Main {
 
         // 注册 Action
         String sayHelloActionId = "sayHello";
-        // relinoConfig.registerAction(sayHelloActionId, new SayHello());
+        relinoConfig.registerAction(sayHelloActionId, new SayHello());
 
         Relino relino = new Relino(relinoConfig);
         relino.start();
@@ -78,9 +93,9 @@ public class Main {
         }
 
         relino.shutdown();
-    }*/
+    }
 
-    /*static class SayHello implements Action {
+    static class SayHello implements Action {
 
         @Override
         public ActionResult execute(String jobId, JobAttr commonAttr, int executeCount) {
@@ -99,5 +114,5 @@ public class Main {
                 return ActionResult.buildError(retAttr);
             }
         }
-    }*/
+    }
 }

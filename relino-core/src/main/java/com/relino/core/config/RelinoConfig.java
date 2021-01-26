@@ -5,7 +5,7 @@ import com.relino.core.model.retry.IRetryPolicy;
 import com.relino.core.model.retry.LinearRetryPolicy;
 import com.relino.core.support.Utils;
 import com.relino.core.support.id.IdGenerator;
-import com.relino.core.support.id.UUIDIdGenerator;
+import com.relino.core.support.id.TimeHostPidIdGenerator;
 
 import javax.sql.DataSource;
 import java.util.ArrayList;
@@ -38,7 +38,7 @@ public class RelinoConfig {
     private int scanRunnableJobBatchSize = 200;
     private int watchDogTimeOutMinutes = 5;
 
-    private IdGenerator idGenerator = new UUIDIdGenerator();
+    private IdGenerator idGenerator = new TimeHostPidIdGenerator();
 
     // 默认重试策略
     private IRetryPolicy defaultRetryPolicy = new LinearRetryPolicy(DEFAULT_RETRY_K);

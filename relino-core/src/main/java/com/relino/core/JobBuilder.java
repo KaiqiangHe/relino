@@ -56,10 +56,11 @@ public class JobBuilder {
         return this;
     }
 
-    public JobBuilder jobCode(String jobCode) {
+    //
+    /*public JobBuilder jobCode(String jobCode) {
         this.jobCode = jobCode;
         return this;
-    }
+    }*/
 
     public JobBuilder delayExecute(int delaySeconds) {
         this.delayJob = true;
