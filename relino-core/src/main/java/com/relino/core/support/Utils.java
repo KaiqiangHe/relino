@@ -28,6 +28,9 @@ public class Utils {
 
     private static DateTimeFormatter defaultFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd HH:mm:ss");
     public static String toStrDate(LocalDateTime dateTime) {
+        if(dateTime == null) {
+            return "null";
+        }
         return dateTime.format(defaultFormatter);
     }
 
