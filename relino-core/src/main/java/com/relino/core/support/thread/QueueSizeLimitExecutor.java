@@ -112,13 +112,12 @@ public class QueueSizeLimitExecutor<T> implements Runnable {
 
     public void shutdown() {
         if(isStop.compareAndSet(false, true)) {
+            workers.shutdown();
             try {
-                workers.shutdown();
-
                 // 等待10秒
                 workers.awaitTermination(10, TimeUnit.SECONDS);
             } catch (InterruptedException e) {
-                // ignore
+                log.error("Shutdown workers interrupted.", e);
             }
         }
     }
