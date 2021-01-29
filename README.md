@@ -81,8 +81,6 @@ relino.shutdown();
 
 ### 配置介绍
 
-参考`RelinoConfig`类
-
 | 设置名                   | 默认值                                                       | 说明                                                         |
 | :----------------------- | ------------------------------------------------------------ | ------------------------------------------------------------ |
 | appId                    | 无，需指定                                                   | 应用唯一id                                                   |
@@ -96,7 +94,57 @@ relino.shutdown();
 | selfRetryPolicy          | 默认一注册了`ImmediatelyRetryPolicy` 立即重试，为`Relino#IMMEDIATELY_RETRY_POLICY` | 自定义重试策略，可通过`registerRetryPolicy(String retryPolicyId, IRetryPolicy retry)`注册自定义重试策略。 |
 | defaultRetryPolicy       | `LinearRetryPolicy` - 重试时间线性增长策略，为5乘以已执行的次数，为5 10 15 20 ... | 默认的重试策略，为`Relino#DEFAULT_RETRY_POLICY`常量          |
 
+配置可参考`/relino/relino-demo/src/main/java/com/relino/demo/RelinoConfigDemo.java`
 
+```java
+public class RelinoConfigDemo {
+
+    /**
+     * Relino配置Demo
+     */
+    public static void main(String[] args) {
+
+        String appId = "relino-config-demo";
+        String ZK_CONNECT_STR = "127.0.0.1:2181,127.0.0.2:2181,127.0.0.3:2181";     // 设置为集群模式
+        DataSource dataSource = null;   // 指定datasource
+
+        RelinoConfig relinoConfig = new RelinoConfig(appId, ZK_CONNECT_STR, dataSource);
+
+        // 设置执行job的核心线程数为3，最大线程数为10
+        // 设置缓存需要执行Job的队列为1000
+        relinoConfig.setExecutorJobCoreThreadNum(3);
+        relinoConfig.setExecutorJobMaxThreadNum(10);
+        relinoConfig.setExecutorJobQueueSize(1000);
+
+        // 设置id生成器为UUIDIdGenerator
+        relinoConfig.setIdGenerator(new UUIDIdGenerator());
+
+        // 注册Action
+        relinoConfig.registerAction("sayHello", new Main.SayHello());
+
+        // 注册自定义重试策略
+        relinoConfig.registerRetryPolicy("im_then_delay", new ImmediatelyThenDelayRetryPolicy());
+
+        // 设置默认重试策略为 为3乘以已执行的次数 + 5
+        relinoConfig.setDefaultRetryPolicy(new LinearRetryPolicy(3, 5));
+    }
+
+    /**
+     * 前3次立即重试，之后延迟 5 * executeCount秒
+     */
+    static class ImmediatelyThenDelayRetryPolicy implements IRetryPolicy {
+
+        @Override
+        public int retryAfterSeconds(int executeCount) {
+            if(executeCount <= 3) {
+                return 0;
+            } else {
+                return 5 * executeCount;
+            }
+        }
+    }
+}
+```
 
 ## RoadMap
 
