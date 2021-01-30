@@ -93,12 +93,4 @@ public class JobStore {
 
         return JobUtils.toJobEntity(row);
     }
-
-    /**
-     * 将Job由Sleep设置为Runnable
-     */
-
-    /**
-     * 将Job有Runnable设置为Sleep
-     */
 }

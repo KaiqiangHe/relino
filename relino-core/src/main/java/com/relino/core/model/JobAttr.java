@@ -111,5 +111,4 @@ public class JobAttr {
 
         return toValueFunc.apply(str);
     }
-
 }

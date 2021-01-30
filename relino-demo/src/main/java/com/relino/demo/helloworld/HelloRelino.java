@@ -66,7 +66,7 @@ public class HelloRelino {
         JobAttr initAttr = new JobAttr();
         initAttr.setString("userId", "orange" + System.currentTimeMillis());
 
-        // 3.2 创建Job并延5s迟执行
+        // 3.2 创建Job并延10s迟执行
         Job job = jobFactory.builder(sayHelloActionId)
                 .commonAttr(initAttr)
                 .delayExecute(10)
