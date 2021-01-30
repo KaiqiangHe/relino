@@ -4,7 +4,6 @@ import com.relino.core.exception.HandleException;
 import com.relino.core.model.JobStatus;
 import com.relino.core.model.db.ExecuteTimeEntity;
 import com.relino.core.register.ElectionCandidate;
-import com.relino.core.support.AbstractRunSupport;
 import com.relino.core.support.Utils;
 import com.relino.core.support.db.DBExecutor;
 import com.relino.core.support.db.DBPessimisticLock;
@@ -29,7 +28,7 @@ import java.util.stream.Collectors;
  *
  * @author kaiqiang.he
  */
-public class DeadJobWatchDog extends AbstractRunSupport implements ElectionCandidate {
+public class DeadJobWatchDog implements ElectionCandidate {
 
     private static final Logger log = LoggerFactory.getLogger(DeadJobWatchDog.class);
 
@@ -57,33 +56,23 @@ public class DeadJobWatchDog extends AbstractRunSupport implements ElectionCandi
     }
 
     @Override
-    protected void execute0() throws InterruptedException {
-        log.info("DeadJobWatchDog开始运行");
-        while (true) {
+    public void executeWhenCandidate() throws InterruptedException {
 
-            boolean sleep;
+        while (!Thread.interrupted()) {
             try {
-                if(wannaStop()) { break; }
-                sleep = doWatchDeadJob();
-                if(wannaStop()) { break; }
+                doWatchDeadJob();
+            } catch (InterruptedException e) {
+                throw e;
             } catch (Throwable t) {
-                sleep = true;
                 HandleException.handleUnExpectedException(t);
             }
 
-            /**
-             * 注意：
-             * 如果doScan()操作异常，这里一定要Sleep
-             */
-            if(sleep) {
-                Thread.sleep(10000);
-            }
+            // 每隔10s执行一次
+            Thread.sleep(10000);
         }
-        log.info("DeadJobWatchDog运行结束");
     }
 
-    private boolean doWatchDeadJob() throws SQLException {
-        boolean sleep = true;
+    private void doWatchDeadJob() throws Exception {
         LocalDateTime startTime = LocalDateTime.now().minusMinutes(deadJobMinute);
         long start = System.currentTimeMillis();
         try {
@@ -100,7 +89,6 @@ public class DeadJobWatchDog extends AbstractRunSupport implements ElectionCandi
 
                 kvStore.update(DEAD_JOB_WATCH_DOG_KEY, Long.toString(entity.getExecuteOrder()));
                 deleteExecuteTimeRecord(entity.getId());
-                sleep = false;
 
                 if(log.isDebugEnabled()) {
                     log.debug("ScanRunnableDelayJob, ids = [{}], time = {}",
@@ -112,20 +100,13 @@ public class DeadJobWatchDog extends AbstractRunSupport implements ElectionCandi
             dbExecutor.commitTx();
         } catch (Throwable t) {
             dbExecutor.rollbackTx();
-            HandleException.handleUnExpectedException(t);
-            sleep = true;
+            throw t;
         }
-        return sleep;
     }
 
     @Override
-    public void executeWhenCandidate() throws Exception {
-        execute();
-    }
-
-    @Override
-    public void stopExecute() {
-        terminal();
+    public void destroy() {
+        // empty
     }
 
     // ----------------------------------------------------------------------------------

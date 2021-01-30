@@ -1,7 +1,6 @@
 package com.relino.core.register;
 
 import com.relino.core.config.LeaderSelectorConfig;
-import com.relino.core.support.AbstractRunSupport;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
@@ -14,7 +13,6 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.Arrays;
-import java.util.concurrent.ThreadLocalRandom;
 
 public class CuratorLeaderElectionTest {
 
@@ -33,8 +31,8 @@ public class CuratorLeaderElectionTest {
             client.start();
             log.info("zk-{} connect success.", i);
             String name = "apple-" + i;
-            RelinoLeaderElectionListener appleListener = new RelinoLeaderElectionListener(new LeaderSelectorConfig("apple", "/relino/apple", () -> new Apple(name)));
-            CuratorLeaderElection leaderElection = new CuratorLeaderElection(Arrays.asList(appleListener), client);
+            RelinoLeaderElectionListener appleListener = new RelinoLeaderElectionListener(new LeaderSelectorConfig("apple", () -> new Apple(name)));
+            CuratorLeaderElection leaderElection = new CuratorLeaderElection("test", Arrays.asList(appleListener), client);
             leaderElection.execute();
         }
 
@@ -44,7 +42,7 @@ public class CuratorLeaderElectionTest {
         log.info("end .... ");
     }
 
-    static class Apple extends AbstractRunSupport implements ElectionCandidate {
+    static class Apple implements ElectionCandidate {
 
         private String name;
 
@@ -53,34 +51,13 @@ public class CuratorLeaderElectionTest {
         }
 
         @Override
-        public void executeWhenCandidate() throws Exception {
-            execute();
+        public void executeWhenCandidate() throws InterruptedException {
+
         }
 
         @Override
-        public void stopExecute() {
-            terminal();
-        }
+        public void destroy() {
 
-        @Override
-        protected void execute0() {
-            for (int i = 0; i < 10; i++) {
-                if(wannaStop()) {
-                    break;
-                }
-
-                log.info("{} execute {}", name, i);
-                try {
-                    Thread.sleep(1000);
-                } catch (InterruptedException e) {
-                    throw new RuntimeException(e);
-                }
-
-                if(ThreadLocalRandom.current().nextInt(5) == 0) {
-                    log.info("{} mock stop", name);
-                    this.terminalAsync();
-                }
-            }
         }
     }
 

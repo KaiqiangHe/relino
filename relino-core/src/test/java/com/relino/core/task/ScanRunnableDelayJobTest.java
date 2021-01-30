@@ -7,7 +7,6 @@ import com.relino.core.model.Job;
 import com.relino.core.support.db.DBExecutor;
 import com.relino.core.support.id.IdGenerator;
 import org.junit.Before;
-import org.junit.Test;
 
 import java.util.concurrent.ThreadLocalRandom;
 
@@ -35,10 +34,5 @@ public class ScanRunnableDelayJobTest {
             jobProducer.createJob(job);
 
         }
-    }
-
-    @Test
-    public void test() {
-        scanRunnableDelayJob.execute();
     }
 }

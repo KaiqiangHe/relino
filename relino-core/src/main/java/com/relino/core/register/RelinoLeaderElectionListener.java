@@ -1,9 +1,9 @@
 package com.relino.core.register;
 
 import com.relino.core.config.LeaderSelectorConfig;
+import com.relino.core.exception.HandleException;
 import org.apache.curator.framework.CuratorFramework;
-import org.apache.curator.framework.recipes.leader.LeaderSelectorListener;
-import org.apache.curator.framework.state.ConnectionState;
+import org.apache.curator.framework.recipes.leader.LeaderSelectorListenerAdapter;
 
 /**
  * 官方文档和建议stateChanged()：
@@ -11,7 +11,7 @@ import org.apache.curator.framework.state.ConnectionState;
  *
  * @author kaiqiang.he
  */
-public class RelinoLeaderElectionListener implements LeaderSelectorListener {
+public class RelinoLeaderElectionListener extends LeaderSelectorListenerAdapter {
 
     private LeaderSelectorConfig leaderSelectorConfig;
 
@@ -24,17 +24,23 @@ public class RelinoLeaderElectionListener implements LeaderSelectorListener {
     @Override
     public void takeLeadership(CuratorFramework curatorFramework) throws Exception {
         task = leaderSelectorConfig.getTaskSupplier().get();
-        task.executeWhenCandidate();
-    }
-
-    @Override
-    public void stateChanged(CuratorFramework client, ConnectionState newState) {
-        if(newState == ConnectionState.LOST || newState == ConnectionState.SUSPENDED) {
-            task.stopExecute();
+        try {
+            task.executeWhenCandidate();
+        } catch (InterruptedException e) {
+            // ignore
+            HandleException.handleThreadInterruptedException(e);
+        } catch (Exception e) {
+            HandleException.handleUnExpectedException(e);
+        } finally {
+            task.destroy();
         }
     }
 
     public LeaderSelectorConfig getLeaderSelectorConfig() {
         return leaderSelectorConfig;
+    }
+
+    public ElectionCandidate getTask() {
+        return task;
     }
 }

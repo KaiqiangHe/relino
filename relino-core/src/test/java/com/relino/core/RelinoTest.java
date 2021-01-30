@@ -5,7 +5,6 @@ import com.relino.core.helper.TestHelper;
 import com.relino.core.model.Job;
 import com.relino.core.model.JobAttr;
 import com.relino.core.support.db.DBExecutor;
-import com.relino.core.task.DeadJobWatchDog;
 import com.relino.core.task.JobFactory;
 import org.junit.Before;
 import org.junit.Test;
@@ -63,11 +62,5 @@ public class RelinoTest {
         new BufferedReader(new InputStreamReader(System.in)).readLine();
 
         log.info("end .... ");
-    }
-
-    @Test
-    public void testDeadJobWatchDog() {
-        DeadJobWatchDog watchDog = new DeadJobWatchDog(app.dbExecutor, 1);
-        watchDog.execute();
     }
 }

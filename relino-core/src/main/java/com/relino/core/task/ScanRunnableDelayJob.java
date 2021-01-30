@@ -3,7 +3,6 @@ package com.relino.core.task;
 import com.relino.core.exception.HandleException;
 import com.relino.core.model.JobStatus;
 import com.relino.core.register.ElectionCandidate;
-import com.relino.core.support.AbstractRunSupport;
 import com.relino.core.support.Utils;
 import com.relino.core.support.db.DBExecutor;
 import com.relino.core.support.db.DBPessimisticLock;
@@ -25,7 +24,7 @@ import java.util.stream.Collectors;
  *
  * @author kaiqiang.he
  */
-public final class ScanRunnableDelayJob extends AbstractRunSupport implements ElectionCandidate {
+public final class ScanRunnableDelayJob implements ElectionCandidate {
 
     private static final Logger log = LoggerFactory.getLogger(ScanRunnableDelayJob.class);
 
@@ -55,86 +54,61 @@ public final class ScanRunnableDelayJob extends AbstractRunSupport implements El
     }
 
     @Override
-    protected void execute0() throws InterruptedException {
-        log.info("ScanRunnableDelayJob开始运行");
-        while (true) {
-
+    public void executeWhenCandidate() throws InterruptedException {
+        while (!Thread.interrupted()) {
             boolean sleep;
             try {
-                if(wannaStop()) { break; }
                 sleep = doScan();
-                if(wannaStop()) { break; }
+            } catch (InterruptedException e) {
+                throw e;
             } catch (Throwable t) {
-                sleep = true;
                 HandleException.handleUnExpectedException(t);
+                sleep = true;
             }
 
-            /**
-             * 注意：
-             * 如果doScan()操作异常，这里一定要Sleep
-             */
             if(sleep) {
-                Thread.sleep(500);
+                Thread.sleep(200);
             }
         }
-        log.info("ScanRunnableDelayJob运行结束");
+    }
+
+    @Override
+    public void destroy() {
+        // empty
     }
 
     /**
-     * @return 返回主线程是否sleep
+     * 返回是否要sleep
      */
-    public boolean doScan() throws SQLException {
+    public boolean doScan() throws Exception {
 
-        boolean sleep;
         LocalDateTime now = LocalDateTime.now();
         long start = System.currentTimeMillis();
-        try {
-            dbExecutor.beginTx();
+        return dbExecutor.executeWithTx(none -> {
             dbPessimisticLock.openPessimisticLock(EXECUTE_ORDER_KEY);
             String value = kvStore.get(EXECUTE_ORDER_KEY);
             long executeOrder = Long.parseLong(value);
-
             List<Long> ids = getNextCanRunnableJobIds(now.minusMinutes(TIME_STEP), now, batchSize);
             if(ids.isEmpty()) {
-                sleep = true;
-            } else {
-                // 更新可执行job
-                List<IdAndExecuteOrder> updateData = new ArrayList<>();
-                for (Long id : ids) {
-                    executeOrder++;
-                    updateData.add(new IdAndExecuteOrder(id, executeOrder));
-                }
-                setSleepJobRunnable(updateData);
-
-                // 更新executeOrder
-                kvStore.update(EXECUTE_ORDER_KEY, Long.toString(executeOrder));
-                sleep = false;
+                return true;
             }
 
+            // 更新可执行job
+            List<IdAndExecuteOrder> updateData = new ArrayList<>();
+            for (Long id : ids) {
+                executeOrder++;
+                updateData.add(new IdAndExecuteOrder(id, executeOrder));
+            }
+            setSleepJobRunnable(updateData);
+            // 更新executeOrder
+            kvStore.update(EXECUTE_ORDER_KEY, Long.toString(executeOrder));
             if(log.isDebugEnabled()) {
                 log.debug("ScanRunnableDelayJob, ids = [{}], time = {}",
                         ids.stream().map(v -> v + "").collect(Collectors.joining(",")),
                         System.currentTimeMillis() - start);
             }
-
-            dbExecutor.commitTx();
-        } catch (Throwable t) {
-            dbExecutor.rollbackTx();
-            sleep = true;
-            HandleException.handleUnExpectedException(t);
-        }
-
-        return sleep;
-    }
-
-    @Override
-    public void executeWhenCandidate() throws Exception {
-        execute();
-    }
-
-    @Override
-    public void stopExecute() {
-        terminal();
+            return false;
+        }, null);
     }
 
     /**

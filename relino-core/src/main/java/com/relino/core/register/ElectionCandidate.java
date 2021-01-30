@@ -1,19 +1,20 @@
 package com.relino.core.register;
 
 /**
- * zk 节点选取
+ * zk Master节点选取
  *
  * @author kaiqiang.he
  */
 public interface ElectionCandidate {
     
     /**
-     * 当被选举为主节点是调用该方法执行
+     * 当被选举为Master节点时执行该方法
+     *
+     * 注意：
+     * 1. 不要吞掉任何InterruptedException异常
+     * 2. 如果Thread.interrupted() == true 主动结束
      */
-    void executeWhenCandidate() throws Exception;
-    
-    /**
-     * 停止执行
-     */
-    void stopExecute();
+    void executeWhenCandidate() throws InterruptedException;
+
+    void destroy();
 }

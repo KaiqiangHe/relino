@@ -10,29 +10,22 @@ import java.util.function.Supplier;
  */
 public class LeaderSelectorConfig {
 
-    private String name;
-
-    private String leaderPath;
+    private String leaderId;
 
     private Supplier<ElectionCandidate> taskSupplier;
 
-    public LeaderSelectorConfig(String name, String leaderPath, Supplier<ElectionCandidate> taskSupplier) {
+    public LeaderSelectorConfig(String leaderId, Supplier<ElectionCandidate> taskSupplier) {
 
-        Utils.checkNonEmpty(name);
-        Utils.checkNonEmpty(leaderPath);
+        Utils.checkNonEmpty(leaderId);
         Utils.checkNoNull(taskSupplier);
 
-        this.name = name;
-        this.leaderPath = leaderPath;
+        this.leaderId = leaderId;
+
         this.taskSupplier = taskSupplier;
     }
 
-    public String getName() {
-        return name;
-    }
-
-    public String getLeaderPath() {
-        return leaderPath;
+    public String getLeaderId() {
+        return leaderId;
     }
 
     public Supplier<ElectionCandidate> getTaskSupplier() {

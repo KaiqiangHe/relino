@@ -48,6 +48,7 @@ public class Relino {
 
     private final RelinoConfig relinoConfig;
 
+    private final String appId;
     public final DBExecutor dbExecutor;
     private final JobStore jobStore;
     private final JobFactory jobFactory;
@@ -65,6 +66,8 @@ public class Relino {
 
     public Relino(RelinoConfig relinoConfig) {
         this.relinoConfig = relinoConfig;
+
+        this.appId = relinoConfig.getAppId();
 
         registerActionAndRetryPolicy();
 
@@ -97,18 +100,15 @@ public class Relino {
         curatorClient = CuratorFrameworkFactory.newClient(
                 relinoConfig.getZkConnectStr(), SESSION_TIMEOUT, CONNECTION_TIMEOUT, retryPolicy);
         // 主节点选取
-        relinoConfig.registerLeaderSelector(new LeaderSelectorConfig("scanRunnableDelayJob",
-                "/relino/scanRunnableDelayJob",
-                () -> new ScanRunnableDelayJob(dbExecutor, relinoConfig.getScanRunnableJobBatchSize()))
+        relinoConfig.registerLeaderSelector(
+                new LeaderSelectorConfig("scanRunnableDelayJob", () -> new ScanRunnableDelayJob(dbExecutor, relinoConfig.getScanRunnableJobBatchSize()))
         );
         relinoConfig.registerLeaderSelector(
-                new LeaderSelectorConfig("deadJobWatchDog",
-                        "/relino/deadJobWatchDog",
-                        () -> new DeadJobWatchDog(dbExecutor, relinoConfig.getWatchDogTimeOutMinutes()))
+                new LeaderSelectorConfig("deadJobWatchDog", () -> new DeadJobWatchDog(dbExecutor, relinoConfig.getWatchDogTimeOutMinutes()))
         );
         List<RelinoLeaderElectionListener> electionListenerList =
                 relinoConfig.getLeaderSelectorConfigList().stream().map(RelinoLeaderElectionListener::new).collect(Collectors.toList());
-        curatorLeaderElection = new CuratorLeaderElection(electionListenerList, curatorClient);
+        curatorLeaderElection = new CuratorLeaderElection(appId, electionListenerList, curatorClient);
     }
 
     public void start() {
@@ -118,10 +118,7 @@ public class Relino {
     }
 
     /**
-     * destroy
-     * shutdown
-     * close
-     * 区别
+     *
      */
     public void shutdown() {
         try {

@@ -67,7 +67,7 @@ public class Main {
 
         long timeMillis = System.currentTimeMillis();
         int n = 0;
-        while (n < 1000) {
+        while (n < 100) {
             try {
 
                 JobAttr initAttr = new JobAttr();
@@ -84,7 +84,7 @@ public class Main {
                 jobFactory.createJob(job);
 
                 log.info("create job success, jobId = {}", job.getJobId());
-                Thread.sleep(5);
+                Thread.sleep(50);
 
                 n++;
             } catch (Exception e) {
