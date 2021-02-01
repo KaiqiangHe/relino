@@ -7,6 +7,8 @@ import com.relino.core.support.Utils;
 import com.relino.core.support.db.DBExecutor;
 import com.relino.core.support.db.DBPessimisticLock;
 import com.relino.core.support.db.KVStore;
+import com.relino.core.support.thread.ExecutorServiceUtil;
+import com.relino.core.support.thread.NamedThreadFactory;
 import org.apache.commons.dbutils.handlers.ColumnListHandler;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -17,6 +19,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.*;
 import java.util.stream.Collectors;
 
 /**
@@ -38,6 +41,11 @@ public final class ScanRunnableDelayJob implements ElectionCandidate {
     private DBPessimisticLock dbPessimisticLock;
     private int batchSize;
 
+    private final ScheduledExecutorService scheduledExecutor =
+            Executors.newScheduledThreadPool(1, new NamedThreadFactory("scan-runnable-job", true));
+    private ScheduledFuture<?> scheduledFuture;
+    private CountDownLatch countDownLatch = new CountDownLatch(1);
+
     /**
      * @param dbExecutor not null
      * @param batchSize 属于[1, {@link MAX_BATCH_SIZE}]
@@ -55,60 +63,64 @@ public final class ScanRunnableDelayJob implements ElectionCandidate {
 
     @Override
     public void executeWhenCandidate() throws InterruptedException {
-        while (!Thread.interrupted()) {
-            boolean sleep;
+        scheduledFuture = scheduledExecutor.scheduleAtFixedRate(() -> {
             try {
-                sleep = doScan();
-            } catch (InterruptedException e) {
-                throw e;
-            } catch (Throwable t) {
-                HandleException.handleUnExpectedException(t);
-                sleep = true;
+                doScan();
+            } catch (Exception e) {
+                throw new RuntimeException(e);
             }
-
-            if(sleep) {
-                Thread.sleep(200);
-            }
-        }
+        }, 0, 500, TimeUnit.MILLISECONDS);
+        countDownLatch.await();
     }
 
     @Override
     public void destroy() {
-        // empty
+        try {
+            ExecutorServiceUtil.cancelScheduledFuture(scheduledFuture);
+        } catch (Exception e) {
+            HandleException.handleUnExpectedException(e);
+        }
+
+        scheduledExecutor.shutdown();
     }
 
     /**
      * 返回是否要sleep
      */
-    public boolean doScan() throws Exception {
+    public void doScan() throws Exception {
 
         LocalDateTime now = LocalDateTime.now();
-        long start = System.currentTimeMillis();
-        return dbExecutor.executeWithTx(none -> {
-            dbPessimisticLock.openPessimisticLock(EXECUTE_ORDER_KEY);
-            String value = kvStore.get(EXECUTE_ORDER_KEY);
-            long executeOrder = Long.parseLong(value);
-            List<Long> ids = getNextCanRunnableJobIds(now.minusMinutes(TIME_STEP), now, batchSize);
-            if(ids.isEmpty()) {
-                return true;
-            }
+        boolean continueScan = true;
+        while (continueScan) {
+            long start = System.currentTimeMillis();
+            continueScan = dbExecutor.executeWithTx(none -> {
+                dbPessimisticLock.openPessimisticLock(EXECUTE_ORDER_KEY);
+                String value = kvStore.get(EXECUTE_ORDER_KEY);
+                long executeOrder = Long.parseLong(value);
+                List<Long> ids = getNextCanRunnableJobIds(now.minusMinutes(TIME_STEP), now, batchSize);
 
-            // 更新可执行job
-            List<IdAndExecuteOrder> updateData = new ArrayList<>();
-            for (Long id : ids) {
-                executeOrder++;
-                updateData.add(new IdAndExecuteOrder(id, executeOrder));
-            }
-            setSleepJobRunnable(updateData);
-            // 更新executeOrder
-            kvStore.update(EXECUTE_ORDER_KEY, Long.toString(executeOrder));
-            if(log.isDebugEnabled()) {
-                log.debug("ScanRunnableDelayJob, ids = [{}], time = {}",
+                boolean ret;
+                if (ids.isEmpty()) {
+                    ret = false;
+                } else {
+                    ret = true;
+                    // 更新可执行job
+                    List<IdAndExecuteOrder> updateData = new ArrayList<>();
+                    for (Long id : ids) {
+                        executeOrder++;
+                        updateData.add(new IdAndExecuteOrder(id, executeOrder));
+                    }
+                    setSleepJobRunnable(updateData);
+                    // 更新executeOrder
+                    kvStore.update(EXECUTE_ORDER_KEY, Long.toString(executeOrder));
+                }
+
+                log.info("scan runnable Job, ids = [{}], time = {}",
                         ids.stream().map(v -> v + "").collect(Collectors.joining(",")),
                         System.currentTimeMillis() - start);
-            }
-            return false;
-        }, null);
+                return ret;
+            }, null);
+        }
     }
 
     /**

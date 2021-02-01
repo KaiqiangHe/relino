@@ -4,6 +4,8 @@ import com.relino.core.config.LeaderSelectorConfig;
 import com.relino.core.exception.HandleException;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.leader.LeaderSelectorListenerAdapter;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 /**
  * 官方文档和建议stateChanged()：
@@ -12,6 +14,8 @@ import org.apache.curator.framework.recipes.leader.LeaderSelectorListenerAdapter
  * @author kaiqiang.he
  */
 public class RelinoLeaderElectionListener extends LeaderSelectorListenerAdapter {
+
+    private static final Logger log = LoggerFactory.getLogger(RelinoLeaderElectionListener.class);
 
     private LeaderSelectorConfig leaderSelectorConfig;
 
@@ -28,14 +32,11 @@ public class RelinoLeaderElectionListener extends LeaderSelectorListenerAdapter 
             task.executeWhenCandidate();
         } catch (InterruptedException e) {
             // ignore
-            HandleException.handleThreadInterruptedException(e);
-        } catch (Exception e) {
-            HandleException.handleUnExpectedException(e);
+            log.warn("InterruptedException error occur ", e);
         } finally {
             task.destroy();
         }
     }
-
     public LeaderSelectorConfig getLeaderSelectorConfig() {
         return leaderSelectorConfig;
     }

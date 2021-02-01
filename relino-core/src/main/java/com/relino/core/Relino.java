@@ -24,12 +24,13 @@ import com.relino.core.task.ScanRunnableDelayJob;
 import org.apache.curator.RetryPolicy;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.CuratorFrameworkFactory;
-import org.apache.curator.retry.RetryNTimes;
+import org.apache.curator.retry.ExponentialBackoffRetry;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
 import javax.sql.DataSource;
 import java.util.List;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 /**
@@ -41,7 +42,6 @@ public class Relino {
 
     private static final int SESSION_TIMEOUT = 30 * 1000;
     private static final int CONNECTION_TIMEOUT = 3 * 1000;
-    private static final int DEFAULT_WATCH_DOG_PER_SECOND = 1;
 
     public static final String DEFAULT_RETRY_POLICY = "_df";
     public static final String IMMEDIATELY_RETRY_POLICY = "_im";
@@ -88,7 +88,6 @@ public class Relino {
         this.pullExecutableJobAndExecute = new PullExecutableJobAndExecute(
                 this,
                 relinoConfig.getPullRunnableJobBatchSize(),
-                DEFAULT_WATCH_DOG_PER_SECOND,
                 runnableExecuteQueue,
                 jobExecutor);
 
@@ -96,9 +95,10 @@ public class Relino {
         this.jobFactory = new DefaultJobFactory(jobStore, relinoConfig.getIdGenerator(), actionManager, retryPolicyBeanManager);
 
         // 创建Curator Client
-        RetryPolicy retryPolicy = new RetryNTimes(10, 100);
+        RetryPolicy retryPolicy = new ExponentialBackoffRetry(relinoConfig.getZkMaxRetries(), relinoConfig.getZkMaxRetrySleepMillSeconds());
         curatorClient = CuratorFrameworkFactory.newClient(
                 relinoConfig.getZkConnectStr(), SESSION_TIMEOUT, CONNECTION_TIMEOUT, retryPolicy);
+
         // 主节点选取
         relinoConfig.registerLeaderSelector(
                 new LeaderSelectorConfig("scanRunnableDelayJob", () -> new ScanRunnableDelayJob(dbExecutor, relinoConfig.getScanRunnableJobBatchSize()))
@@ -112,9 +112,19 @@ public class Relino {
     }
 
     public void start() {
-        this.pullExecutableJobAndExecute.start();
+        //
         curatorClient.start();
-        curatorLeaderElection.execute();
+        try {
+            if (!curatorClient.blockUntilConnected(relinoConfig.getZkMaxRetries() * relinoConfig.getZkMaxRetrySleepMillSeconds(), TimeUnit.MILLISECONDS)) {
+                curatorClient.close();
+                throw new RuntimeException("启动zk失败");
+            }
+        } catch (InterruptedException e) {
+            throw new RuntimeException(e);
+        }
+        curatorLeaderElection.start();
+
+        this.pullExecutableJobAndExecute.start();
     }
 
     /**
@@ -124,7 +134,7 @@ public class Relino {
         try {
             pullExecutableJobAndExecute.destroy();
             jobExecutor.shutdown();
-            curatorLeaderElection.shutdown();
+            curatorLeaderElection.close();
             curatorClient.close();
         } catch (Exception e) {
             log.error("结束Relino异常", e);

@@ -33,7 +33,7 @@ public class CuratorLeaderElectionTest {
             String name = "apple-" + i;
             RelinoLeaderElectionListener appleListener = new RelinoLeaderElectionListener(new LeaderSelectorConfig("apple", () -> new Apple(name)));
             CuratorLeaderElection leaderElection = new CuratorLeaderElection("test", Arrays.asList(appleListener), client);
-            leaderElection.execute();
+            leaderElection.start();
         }
 
         System.out.println("Press enter/return to quit\n");

@@ -63,8 +63,8 @@ public class DeadJobWatchDog implements ElectionCandidate {
                 doWatchDeadJob();
             } catch (InterruptedException e) {
                 throw e;
-            } catch (Throwable t) {
-                HandleException.handleUnExpectedException(t);
+            } catch (Exception e) {
+                HandleException.handleUnExpectedException(e);
             }
 
             // 每隔10s执行一次

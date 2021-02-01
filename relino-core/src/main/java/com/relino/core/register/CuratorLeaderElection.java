@@ -1,7 +1,6 @@
 package com.relino.core.register;
 
 import com.relino.core.config.LeaderSelectorConfig;
-import com.relino.core.exception.HandleException;
 import com.relino.core.support.Utils;
 import org.apache.curator.framework.CuratorFramework;
 import org.apache.curator.framework.recipes.leader.LeaderSelector;
@@ -39,9 +38,10 @@ public class CuratorLeaderElection {
         this.curatorClient = curatorClient;
     }
 
-    public void execute() {
+    public void start() {
         if(leaderSelectorListener.isEmpty()) {
             log.info("no leader selections.");
+            return ;
         }
 
         for (RelinoLeaderElectionListener listener : leaderSelectorListener) {
@@ -55,16 +55,15 @@ public class CuratorLeaderElection {
         }
     }
 
-    public void shutdown() {
-        log.info("开始结束CuratorLeaderElection");
+    public void close() {
         selectorElectionMap.forEach((s, l) -> {
             try {
                 s.close();
-            } catch (Throwable t) {
-                HandleException.handleUnExpectedException(t);
+                log.info("{} leader selection close.", l.getLeaderSelectorConfig().getLeaderId());
+            } catch (Exception e) {
+                log.error("{} leader selection close unexpected exception occur.", l.getLeaderSelectorConfig().getLeaderId(), e);
             }
         });
-        log.info("结束CuratorLeaderElection完成");
     }
 
     private String generateZKPath(String appId, String leaderId) {

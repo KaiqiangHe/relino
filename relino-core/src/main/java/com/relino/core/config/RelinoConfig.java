@@ -22,8 +22,13 @@ public class RelinoConfig {
 
     private String appId;
 
-    // zk相关
+    /* zk相关 */
     private String zkConnectStr;
+    // zk连接最大重试次数
+    private int zkMaxRetries = 3;
+    // zk连接重试间隔
+    private int zkMaxRetrySleepMillSeconds = 2000;
+
     private List<LeaderSelectorConfig> leaderSelectorConfigList = new ArrayList<>();
 
     // 数据源
@@ -158,5 +163,21 @@ public class RelinoConfig {
 
     public void setIdGenerator(IdGenerator idGenerator) {
         this.idGenerator = idGenerator;
+    }
+
+    public int getZkMaxRetries() {
+        return zkMaxRetries;
+    }
+
+    public int getZkMaxRetrySleepMillSeconds() {
+        return zkMaxRetrySleepMillSeconds;
+    }
+
+    public void setZkMaxRetries(int zkMaxRetries) {
+        this.zkMaxRetries = zkMaxRetries;
+    }
+
+    public void setZkMaxRetrySleepMillSeconds(int zkMaxRetrySleepMillSeconds) {
+        this.zkMaxRetrySleepMillSeconds = zkMaxRetrySleepMillSeconds;
     }
 }
