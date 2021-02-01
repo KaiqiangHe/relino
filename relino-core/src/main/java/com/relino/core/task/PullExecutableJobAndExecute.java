@@ -31,20 +31,16 @@ public final class PullExecutableJobAndExecute {
             Executors.newScheduledThreadPool(1, new NamedThreadFactory("relino-dead-job-watchdog", true));
     private ScheduledFuture<?> watchFuture;
 
-    private Relino relino;
     private int pullSize;
     private final RunnableExecuteQueue executeQueue;
     private final QueueSizeLimitExecutor<Job> executor;
 
-    public PullExecutableJobAndExecute(Relino relino,
-                                       int pullSize,
+    public PullExecutableJobAndExecute(int pullSize,
                                        RunnableExecuteQueue executeQueue,
                                        QueueSizeLimitExecutor<Job> executor) {
 
-        Utils.checkNoNull(relino);
         Utils.check(pullSize, p -> p <= 0, "参数pullSize应该大于0, current = " + pullSize);
 
-        this.relino = relino;
         this.pullSize = pullSize;
         this.executeQueue = executeQueue;
         this.executor = executor;
@@ -67,7 +63,6 @@ public final class PullExecutableJobAndExecute {
             int index = 0;
             while(index < jobs.size()) {
                 Job job = jobs.get(index);
-                job.setRelino(relino);
                 if(executor.addItem(job, 50, TimeUnit.MICROSECONDS)) {
                     index++;
                 }

@@ -86,7 +86,6 @@ public class Relino {
         ObjectConverter<JobEntity, Job> jobConverter = new JobConverter(actionManager, retryPolicyBeanManager);
         this.runnableExecuteQueue = new PessimisticLockExecuteQueue(dbExecutor, jobConverter);
         this.pullExecutableJobAndExecute = new PullExecutableJobAndExecute(
-                this,
                 relinoConfig.getPullRunnableJobBatchSize(),
                 runnableExecuteQueue,
                 jobExecutor);

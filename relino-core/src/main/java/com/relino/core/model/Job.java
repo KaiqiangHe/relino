@@ -19,11 +19,6 @@ public class Job {
     public static final int DELAY_EXECUTE_ORDER = -1;
 
     /**
-     * // TODO: 2021/1/16
-     */
-    private Relino relino;
-
-    /**
      * 数据库自动生成的id
      */
     private final Long id;
@@ -195,14 +190,6 @@ public class Job {
 
     public void setWillExecuteTime(LocalDateTime willExecuteTime) {
         this.willExecuteTime = willExecuteTime;
-    }
-
-    public Relino getRelino() {
-        return relino;
-    }
-
-    public void setRelino(Relino relino) {
-        this.relino = relino;
     }
 
     // ------------------------------------------------------------------------------
