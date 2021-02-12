@@ -1,0 +1,23 @@
+version: '3.4'
+
+services:
+  relino-zk:
+    image: zookeeper:3.4
+    networks:
+      relino_net:
+        ipv4_address: ${ZK_IP}
+
+  relino-db:
+    build: ./relino-db
+    networks:
+      relino_net:
+        ipv4_address: ${DB_IP}
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+
+networks:
+  relino_net:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: ${NETWORK_SUBNET}

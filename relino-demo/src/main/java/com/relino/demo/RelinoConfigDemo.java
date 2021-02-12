@@ -18,8 +18,8 @@ public class RelinoConfigDemo {
     public static void main(String[] args) {
 
         String appId = "relino-config-demo";
-        String ZK_CONNECT_STR = "127.0.0.1:2181,127.0.0.2:2181,127.0.0.3:2181";     // 设置为集群模式
-        DataSource dataSource = null;   // 指定datasource
+        String ZK_CONNECT_STR = "127.0.0.1:2181,127.0.0.2:2181,127.0.0.3:2181";     // ZK连接字符串 集群模式
+        DataSource dataSource = null;                                               // 指定datasource
 
         RelinoConfig relinoConfig = new RelinoConfig(appId, ZK_CONNECT_STR, dataSource);
 

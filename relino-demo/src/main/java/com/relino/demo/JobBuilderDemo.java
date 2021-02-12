@@ -1,12 +1,10 @@
 package com.relino.demo;
 
 import com.relino.core.Relino;
-import com.relino.core.config.RelinoConfig;
 import com.relino.core.model.Job;
 import com.relino.core.model.JobAttr;
 import com.relino.core.task.JobFactory;
 
-import javax.sql.DataSource;
 import java.time.LocalDateTime;
 
 /**
@@ -16,13 +14,7 @@ public class JobBuilderDemo {
 
     public static void main(String[] args) {
 
-        String appId = "relino-config-demo";
-        String ZK_CONNECT_STR = "127.0.0.1:2181";     // 设置为集群模式
-        DataSource dataSource = null;   // 指定datasource
-
-        RelinoConfig relinoConfig = new RelinoConfig(appId, ZK_CONNECT_STR, dataSource);
-        Relino relino = new Relino(relinoConfig);
-
+        Relino relino = null;       // 创建Relino对象
         JobFactory jobFactory = relino.getJobFactory();
 
         // 初始化job属性
