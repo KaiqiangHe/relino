@@ -1,15 +1,21 @@
-# relino
+# Relino
 
-**reliable-notice** 基于mysql的轻量级无中心化可靠执行 & 延时(定时)执行。
+**Relino**是一个用java语言开发，基于数据库存储、轻量级、无中心化的可靠执行和延时(定时)执行组件。不需要复杂的安装过程，只需在业务项目中初始化一些数据表，开箱即用，在一些**请求量不高**的场景中，可以作为消息中间件**部分功能**的替代方案。
+
+该项目正在完善和测试中，有一个beta版本可供体验。如果你对项目感兴趣（开发测试等等），或者有什么建议，欢迎参与到Relino。
 
 ### 快速开始
 
-#### 创建数据表
+项目中包含了`relino-demo`模块，可以配置`/src/main/profile/*/config.properties`，选择对应的`profile`，就可以直接运行该模块下的例子。
 
-执行`/relino/sql/init.sql`文件中的sql语句。
+#### 1. 初始化
+
+组件使用数据库作为存储，`Zookeeper`作为配置中心，需在业务数据库中执行`/relino/sql/init.sql`。
+
+[除此之外，也可以通过docker快速搭建数据库和ZooKeeper环境]:(./doc/docker-quick-start.md)
 
 
-#### Maven
+#### 2. Maven
 ```
 <dependency>
     <groupId>org.github.relino</groupId>
@@ -17,13 +23,13 @@
     <version>1.0</version>
 </dependency>
 ```
-#### HelloRelino
+#### 3. Java
 
-参考`/relino/relino-demo/src/main/java/com/relino/demo/helloworld/HelloRelino.java`类
+可以参考`/relino/relino-demo/src/main/java/com/relino/demo/helloworld/HelloRelino.java`
 
-##### 1. 创建Action
+##### 3.1 实现Action接口，创建SayHello类
 ```java
-static class SayHello implements Action {
+public class SayHello implements Action {
         @Override
         public ActionResult execute(String jobId, JobAttr commonAttr, int executeCount) {
 
@@ -45,13 +51,13 @@ static class SayHello implements Action {
     }
 ```
 
-##### 2. 创建Relino & 注册Action & 启动
+##### 3. 2 创建Relino、注册Action、启动
 ```
-String appId = "hello-relino";
-String ZK_CONNECT_STR = "127.0.0.1:2181";   // zk地址
-DataSource dataSource = ...                 // 数据源 
+String appId = "hello-relino";			// 应用唯一标识
+String zkConnectStr = ...; 			// zk地址，例如 127.0.0.1:2181
+DataSource dataSource = ... ;		// 数据源 
 
-RelinoConfig relinoConfig = new RelinoConfig(appId, ZK_CONNECT_STR, dataSource);
+RelinoConfig relinoConfig = new RelinoConfig(appId, zkConnectStr, dataSource);
 
 // 注册 Action
 String sayHelloActionId = "sayHello";
@@ -62,7 +68,7 @@ Relino relino = new Relino(relinoConfig);
 relino.start();
 ```
 
-##### 3. 创建Job & 延迟执行
+##### 3.3 创建Job & 延迟执行
 ```
 JobFactory jobFactory = relino.getJobFactory();
 
@@ -74,7 +80,7 @@ Job job = jobFactory.builder(sayHelloActionId).commonAttr(initAttr).delayExecute
 jobFactory.createJob(job);
 ```
 
-##### 4. 关闭Relino
+##### 3.4 关闭Relino
 ```
 relino.shutdown();
 ```
@@ -105,10 +111,10 @@ public class RelinoConfigDemo {
     public static void main(String[] args) {
 
         String appId = "relino-config-demo";
-        String ZK_CONNECT_STR = "127.0.0.1:2181,127.0.0.2:2181,127.0.0.3:2181";     // 设置为集群模式
+        String zkConnectStr = "127.0.0.1:2181,127.0.0.2:2181,127.0.0.3:2181";     // 设置为集群模式
         DataSource dataSource = null;   // 指定datasource
 
-        RelinoConfig relinoConfig = new RelinoConfig(appId, ZK_CONNECT_STR, dataSource);
+        RelinoConfig relinoConfig = new RelinoConfig(appId, zkConnectStr, dataSource);
 
         // 设置执行job的核心线程数为3，最大线程数为10
         // 设置缓存需要执行Job的队列为1000
@@ -146,7 +152,7 @@ public class RelinoConfigDemo {
 }
 ```
 
-### 创建Job
+### 创建Job API
 
 ```java
 JobFactory jobFactory = relino.getJobFactory();
@@ -171,11 +177,8 @@ Job job = jobFactory.builder("sayHello")
  jobFactory.createJob(job);
 ```
 
-## RoadMap
+## Road Map
 
-| Item                                                         |
-| ------------------------------------------------------------ |
-| 重构存储结构，采用一个Action一个表的方式，支持单Action单台机器速度限制 |
-| 后台管理系统，支持Action的创建、Job增删改查等                |
-|                                                              |
-
+* 支持常见的数据库，如`Mysql` ` SqlServer ` `Oracle` ` PostgreSQL` 等
+* 后台管理系统，支持Job的查找，创建，重新执行等功能
+* 接入`SpringBoot`，可以更方便的使用组件

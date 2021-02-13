@@ -22,10 +22,10 @@ public class HelloRelino {
 
         // 2. 创建Relino
         String appId = "hello-relino";
-        String ZK_CONNECT_STR = RelinoDemoHelper.demoConfig.getZkConnectStr();
+        String zkConnectStr = RelinoDemoHelper.demoConfig.getZkConnectStr();
         DataSource dataSource = getDataSource();
 
-        RelinoConfig relinoConfig = new RelinoConfig(appId, ZK_CONNECT_STR, dataSource);
+        RelinoConfig relinoConfig = new RelinoConfig(appId, zkConnectStr, dataSource);
         // 2.1 注册 Action
         String sayHelloActionId = "sayHello";
         relinoConfig.registerAction(sayHelloActionId, new SayHello());
