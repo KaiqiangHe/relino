@@ -10,9 +10,7 @@
 
 #### 1. 初始化
 
-组件使用数据库作为存储，`Zookeeper`作为配置中心，需在业务数据库中执行`/relino/sql/init.sql`。
-
-[除此之外，也可以通过docker快速搭建数据库和ZooKeeper环境]:(./doc/docker-quick-start.md)
+组件使用数据库作为存储，`Zookeeper`作为配置中心，需在业务数据库中执行`/relino/sql/init.sql`。[除此之外，也可以通过docker快速搭建数据库和ZooKeeper环境](./doc/docker-quick-start.md)
 
 
 #### 2. Maven
