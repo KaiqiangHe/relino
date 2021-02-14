@@ -1,3 +1,7 @@
+create database relino_demo;
+
+use relino_demo;
+
 drop table if exists job;
 CREATE TABLE job
 (
@@ -46,7 +50,6 @@ CREATE TABLE kv
 ) ENGINE = INNODB
   DEFAULT CHARSET = utf8mb4;
 
-/* todo 类似于日志表 */
 drop table if exists execute_time;
 CREATE TABLE execute_time
 (
@@ -77,6 +80,3 @@ insert into kv(k, v) value ('dead_job_watch_dog', '-1');
 insert into pessimistic_lock(lock_key) value ('execute_queue_cursor');
 insert into pessimistic_lock(lock_key) value ('execute_order');
 insert into pessimistic_lock(lock_key) value ('dead_job_watch_dog');
-
-
-

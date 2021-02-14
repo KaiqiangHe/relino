@@ -30,4 +30,34 @@
 
     </dependencies>
 
+    <profiles>
+        <profile>
+            <id>docker</id>
+            <properties>
+                <profiles.activation>docker</profiles.activation>
+            </properties>
+            <activation>
+                <activeByDefault>true</activeByDefault>
+            </activation>
+        </profile>
+
+        <profile>
+            <id>local</id>
+            <properties>
+                <profiles.activation>local</profiles.activation>
+            </properties>
+        </profile>
+    </profiles>
+
+    <build>
+        <resources>
+            <resource>
+                <directory>${project.basedir}/src/main/resources</directory>
+            </resource>
+            <resource>
+                <directory>${project.basedir}/src/main/profile/${profiles.activation}</directory>
+            </resource>
+        </resources>
+    </build>
+
 </project>

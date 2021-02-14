@@ -7,8 +7,6 @@ import com.relino.core.model.ActionResult;
 import com.relino.core.model.Job;
 import com.relino.core.model.JobAttr;
 import com.relino.core.task.JobFactory;
-import com.zaxxer.hikari.HikariConfig;
-import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -41,19 +39,9 @@ public class Main {
 
     public static void main(String[] args) {
 
-        // create datasource
-        HikariConfig config = new HikariConfig();
-        config.setJdbcUrl("jdbc:mysql://localhost:3306/relino?useSSL=false&useSSL=false&serverTimezone=Asia/Shanghai");
-        config.setUsername("root");
-        config.setPassword("DQ971208");
-        config.setAutoCommit(true);
-        config.setConnectionTimeout(5 * 1000);  // 5s
-        config.setMinimumIdle(5);
-        config.setMaximumPoolSize(20);
-        DataSource dataSource = new HikariDataSource(config);
-
         String appId = "hello-relino";
-        String ZK_CONNECT_STR = "127.0.0.1:2181";
+        String ZK_CONNECT_STR = RelinoDemoHelper.demoConfig.getZkConnectStr();
+        DataSource dataSource = RelinoDemoHelper.newDataSource();
         RelinoConfig relinoConfig = new RelinoConfig(appId, ZK_CONNECT_STR, dataSource);
 
         // 注册 Action
@@ -67,7 +55,7 @@ public class Main {
 
         long timeMillis = System.currentTimeMillis();
         int n = 0;
-        while (n < 100) {
+        while (n < 1000) {
             try {
 
                 JobAttr initAttr = new JobAttr();
@@ -84,7 +72,7 @@ public class Main {
                 jobFactory.createJob(job);
 
                 log.info("create job success, jobId = {}", job.getJobId());
-                Thread.sleep(50);
+                Thread.sleep(1);
 
                 n++;
             } catch (Exception e) {

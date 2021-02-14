@@ -11,6 +11,8 @@ import com.relino.core.support.db.JobStore;
 import com.relino.core.support.id.IdGenerator;
 import com.relino.core.task.JobFactory;
 
+import java.sql.SQLException;
+
 /**
  * @author kaiqiang.he
  */
@@ -38,7 +40,7 @@ public class DefaultJobFactory implements JobFactory {
     public void createJob(Job job) throws JobCreateException, JobDuplicateException {
         try {
             jobStore.insertNew(job);
-        } catch (Exception e) {
+        } catch (SQLException e) {
             throw new JobCreateException("创建job失败", e, job);
         }
     }
