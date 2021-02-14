@@ -29,10 +29,26 @@
 
 ### docker-compose 常用命令
 
-简单介绍下一个完整生命周期可能用到的命令，分别对应`构建并启动容器`、`查看`、`停止`、`启动`、`删除当前容器、网络、image等`
+简单介绍下一个完整生命周期可能用到的命令：
+
+```shell script
+# 构建并启动容器
+docker-compose up -d
+
+# 查看
+docker-compose ps
+
+# 停止
+docker-compose stop
+
+# 启动
+docker-compose start
+
+# 删除当前容器、网络、image等
+docker-compose down
+```
 
 ![](./img/docker-quick-start-01.png)
-
 
 
 
