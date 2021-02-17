@@ -83,6 +83,9 @@ jobFactory.createJob(job);
 relino.shutdown();
 ```
 
+### 系统设计
+[系统设计](./doc/architecture-uml.md)
+
 ### 配置介绍
 
 | 设置名                   | 默认值                                                       | 说明                                                         |
