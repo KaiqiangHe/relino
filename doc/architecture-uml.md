@@ -9,7 +9,9 @@
 对于一些异常的情况，如系统宕机等等，通过WatchDog来处理异常的Job。
 
 ###　创建Job
+
 ![创建Job](http://www.plantuml.com/plantuml/png/XP6nJiD038PtFuN7P6WU80EgIWM2WNTmUXOAkboaYw-0b0Ve10oe2mElm8O4pvF2O-0ZGqAKYia--_ll_FkMZP2NK5cW8BKBLS4Uf1JBsErUki-Foxg0jcq1Q2ErnrDRiXFe0ovEKFjdlwtx78jGMiC-IIDSRabur8OXZReBSywEFUavnskMAxwJ9CNlX_VkSL-QuOOH2ACS5vF7LMDuLZLGqu6_dbyFkwV3_kscBlvWolKMSoHqV8iHC3ndwyWkDfv9M2k9IbC0Gq85DOphrV_R6KCnNw_wehfq3NlH87MS2RTa0oTPbgKAJNOo6bYry_wEcOfVlcHdGcL_0000)
+
 ### 设置Job的执行次序
 
 参考：`ScanRunnableDelayJob`类。通过`execute_order`将可执行的Job抽象为一个执行队列。
@@ -22,4 +24,5 @@
 ![拉取Job并执行](http://www.plantuml.com/plantuml/png/bPJFojD05CNtzobc-NNH5yYYjAKk517_FC4akKWqoKWw8qMwI564rDg2I1TLnEAYxgmWjSNNQIRrBRpDb10mQVXMoSpzpJrdpapI7KeUIHNu0DAJFZBzBaaNItPFs2mzx7IoEQrdm9KKeGfiZC3bajjyY6pG1nYFn-0ByGAu8xsNN29xg7p_pWWTHPIFrAKNkcQCSAN6sXtsM8NXkN2PUgHGeSMUedo08vaNpQgR5ZlDVvF9upxMoI5T_30kizMRPy8kh5Js0wYQhLVtXVEyTWabK8ZH-w3FsZMDmCKoUJiFAgntGOBN8hVO_naHa9-RYmr9NJ-k3ikn9zuhlEy5dZGL4Ldix-HzEd-harX_JkX0JjlNsSVlt7NlIWnkMaQt-RBa7WkoMWimTC69y4pq21KXL8Fazm9O38q0EScxbzQQHvareHttgtIwFlxvbdsT552xBe3o1XjD3VeaykcNNcvfzzbqf-D9-c6M_loYuqtLvMgM9BOqgkGhFcBeKfJq5_W7)
 
 ### WatchDog 处理异常的Job
+
 如果发生系统宕机或者Job执行期间发生异常等等情况，可能导致一些Job未来得及执行和更新状态，进而导致错误，通过`DeadJobWatchDog` 来处理。
