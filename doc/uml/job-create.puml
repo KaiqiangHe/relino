@@ -1,0 +1,30 @@
+@startuml
+autonumber
+title 创建Job
+|||
+
+actor Client
+Client -> JobFactory: builder()
+activate JobFactory
+JobFactory -> IdGenerator: getNext() 获取id
+activate IdGenerator
+IdGenerator --> JobFactory: id
+deactivate IdGenerator
+JobFactory -> JobFactory: 生成新job
+JobFactory --> Client: a new job
+deactivate JobFactory
+
+Client -> JobFactory: createJob(job)
+
+database DB
+activate JobFactory
+JobFactory -> DB
+activate DB
+DB -> DB: insert into job value(...)
+DB --> JobFactory
+deactivate DB
+JobFactory --> Client
+deactivate JobFactory
+
+|||
+@enduml

@@ -1,0 +1,44 @@
+@startuml
+
+title 拉取 Job 并执行
+autonumber
+database DB
+
+|||
+loop
+activate PullExecutableJobAndExecute
+PullExecutableJobAndExecute -> RunnableExecuteQueue: getNextRunnableJob() 获取一批可执行的job
+activate RunnableExecuteQueue
+
+RunnableExecuteQueue -> RunnableExecuteQueue: lock
+RunnableExecuteQueue -> DB
+activate DB
+DB --> RunnableExecuteQueue
+deactivate DB
+RunnableExecuteQueue -> RunnableExecuteQueue: unlock
+RunnableExecuteQueue --> PullExecutableJobAndExecute: 一批可执行的Job
+|||
+deactivate RunnableExecuteQueue
+
+PullExecutableJobAndExecute ->> QueueSizeLimitExecutor: 遍历所有job调用addItem()
+deactivate PullExecutableJobAndExecute
+
+|||
+activate QueueSizeLimitExecutor
+end
+create Action
+QueueSizeLimitExecutor -> Action: execute()
+activate Action
+Action -> Action: 执行业务代码
+Action --> QueueSizeLimitExecutor
+deactivate Action
+QueueSizeLimitExecutor -> DB: 更新Job状态和属性
+activate DB
+DB --> QueueSizeLimitExecutor
+deactivate DB
+deactivate QueueSizeLimitExecutor
+database DB
+
+|||
+
+@enduml

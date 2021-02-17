@@ -1,0 +1,35 @@
+@startuml
+
+title 扫描可执行的Job
+autonumber
+
+|||
+CuratorLeaderElection -> ScanRunnableDelayJob: executeWhenCandidate()
+note left of CuratorLeaderElection
+被ZK选为主节点
+end note
+loop
+activate ScanRunnableDelayJob
+ScanRunnableDelayJob -> ScanRunnableDelayJob: lock
+
+database DB
+ScanRunnableDelayJob -> DB: 获取一批到达执行时间的Job
+activate DB
+DB -> DB: select * from job \n where will_execute_time < now() \n and job_stats = DELAY
+DB --> ScanRunnableDelayJob
+deactivate DB
+|||
+ScanRunnableDelayJob -> ScanRunnableDelayJob: 获取一批连续的execute_order
+|||
+ScanRunnableDelayJob -> DB: 更新Job状态为可执行态\n设置execute_order
+activate DB
+DB -> DB: update job \n set job_status=RUNNABLE, \n execute_order=${execute_order}
+DB --> ScanRunnableDelayJob
+deactivate DB
+
+ScanRunnableDelayJob -> ScanRunnableDelayJob: unlock
+|||
+deactivate ScanRunnableDelayJob
+end
+
+@enduml
