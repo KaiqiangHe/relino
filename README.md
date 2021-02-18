@@ -14,13 +14,8 @@
 
 
 #### 2. Maven
-```
-<dependency>
-    <groupId>org.github.relino</groupId>
-    <artifactId>relino-core</artifactId>
-    <version>1.0</version>
-</dependency>
-```
+项目还在完善和测试中，可以`git clone` 该项目运行`relino-demo`下的例子体验。
+
 #### 3. Java
 
 可以参考`/relino/relino-demo/src/main/java/com/relino/demo/helloworld/HelloRelino.java`
