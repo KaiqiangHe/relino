@@ -20,6 +20,13 @@ public class JobAttr {
 
     private static JobAttrSerializer serializer;
 
+    /**
+     * 标识当前对象的版本
+     *
+     * {@link JobAttr#afterModify()}
+     */
+    private int modCount = 0;
+
     static {
         serializer = new JacksonJobAttrSerializer();
     }
@@ -87,6 +94,10 @@ public class JobAttr {
         return getAttr(key, v -> LocalDateTime.parse(v, DEFAULT_FORMATTER));
     }
 
+    public int getModCount() {
+        return modCount;
+    }
+
     // -----------------------------------------------------------------------------------
     //
     /**
@@ -98,6 +109,7 @@ public class JobAttr {
         Utils.checkNonEmpty(key);
         Objects.requireNonNull(value);
         attr.put(key, toStringFunc.apply(value));
+        afterModify();
     }
 
     /**
@@ -110,5 +122,12 @@ public class JobAttr {
         }
 
         return toValueFunc.apply(str);
+    }
+
+    /**
+     * 当该对象发生写操作时调用该方法
+     */
+    private void afterModify() {
+        modCount++;
     }
 }

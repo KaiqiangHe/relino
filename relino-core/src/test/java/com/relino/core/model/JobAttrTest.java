@@ -20,9 +20,16 @@ public class JobAttrTest {
         Double d = 1.111;
         Boolean b = false;
         LocalDateTime time = LocalDateTime.now();
+        int modCount = jobAttr.getModCount();
 
         jobAttr.setString("s", s);
+        modCount ++;
+        Assert.assertEquals(modCount, jobAttr.getModCount());
+
         jobAttr.setLong("l", l);
+        modCount ++;
+        Assert.assertEquals(modCount, jobAttr.getModCount());
+
         jobAttr.setDouble("d", d);
         jobAttr.setBoolean("b", b);
         jobAttr.setLocalDateTime("time", time);
