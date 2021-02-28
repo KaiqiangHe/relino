@@ -1,0 +1,10 @@
+relino:
+  zkConnectStr: 172.20.0.2:2181
+  appId: hello-relino
+
+spring:
+  datasource:
+    username: root
+    password: uU6~_C9Eao@Ph$H!3
+    url: jdbc:mysql://172.20.0.3:3306/relino_demo?useSSL=false&useSSL=false&serverTimezone=Asia/Shanghai
+    driver-class-name: com.mysql.cj.jdbc.Driver

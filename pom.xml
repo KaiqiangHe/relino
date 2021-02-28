@@ -12,6 +12,8 @@
         <module>relino-core</module>
         <module>relino-admin</module>
         <module>relino-demo</module>
+        <module>relino-spring</module>
+        <module>relino-spring-demo</module>
     </modules>
 
     <properties>
